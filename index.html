@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Protocolo V13 | Módulo de Aterrizaje DCA</title>
+    <title>Protocolo V13 | Solicitud de Blindaje</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0d1117; 
+            background-color: #0b1117; /* Fondo oscuro tipo consola */
             color: #ffffff;
             display: flex;
             justify-content: center;
@@ -19,409 +19,523 @@
         }
 
         #terminal-card {
-            background: #1f2a37;
+            background: #1b2b22; /* Color de tarjeta más oscuro */
             border: 1px solid #30363d;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
-            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 600px;
             padding: 30px;
-            width: 100%;
-            max-width: 900px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
         }
 
-        .terminal-header {
-            color: #718096;
-            font-size: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #30363d;
-            padding-bottom: 10px;
-            margin-bottom: 10px;
-        }
-
-        .header-dots > div {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 8px;
-            display: inline-block;
-        }
-        .dot-red { background-color: #ff605c; }
-        .dot-yellow { background-color: #ffbd44; }
-        .dot-green { background-color: #00ca4e; }
-
-        .control-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+        .terminal-log {
+            height: 300px;
+            background-color: #000000;
             padding: 15px;
-            background-color: #2d3748;
             border-radius: 8px;
-        }
-
-        .input-group label {
-            color: #a0aec0;
-            font-size: 0.9rem;
-            margin-bottom: 4px;
-            display: block;
-        }
-        
-        .input-group input {
-            background-color: #1a202c;
-            border: 1px solid #4a5568;
-            color: #ffffff;
-            padding: 10px;
-            border-radius: 6px;
-            width: 100%;
-            transition: border-color 0.2s;
-        }
-        
-        .input-group input:focus {
-            border-color: #8be9fd;
-            outline: none;
-        }
-
-        #log-area-container {
-            display: flex;
-            gap: 20px;
-            flex-grow: 1;
-        }
-
-        #log-area {
-            height: 400px;
             overflow-y: auto;
-            background-color: #010409;
-            border-radius: 8px;
-            padding: 15px;
-            font-size: 0.875rem;
-            line-height: 1.4;
-            color: #b3b3b3;
-            flex: 1;
-        }
-
-        #summary-area {
-            height: 400px;
-            background-color: #2d3748;
-            border: 1px solid #4a5568;
-            border-radius: 8px;
-            padding: 15px;
-            font-size: 0.9rem;
-            line-height: 1.5;
-            flex: 1;
+            white-space: pre-wrap;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border: 1px solid #00ff7f; /* Borde verde brillante */
         }
 
         .log-line {
-            white-space: pre-wrap;
-            word-wrap: break-word;
+            line-height: 1.5;
         }
 
-        .log-error { color: #ff5555; font-weight: 700; }
-        .log-success { color: #50fa7b; font-weight: 700; }
-        .log-instruction { color: #8be9fd; }
-        .log-state { color: #ffb86c; }
-        .log-pending { color: #f1fa8c; }
-        .log-dca { color: #ff79c6; } /* Fucsia para transacciones DCA */
-        .log-summary-title { color: #8be9fd; font-weight: 700; border-bottom: 1px solid #4a5568; padding-bottom: 5px; margin-bottom: 10px; }
+        .prompt { color: #00ff7f; } /* Verde para el prompt */
+        .info { color: #ffffff; } /* Blanco para la información */
+        .error { color: #ff5555; } /* Rojo para errores */
+        .warning { color: #ffaa00; } /* Amarillo para advertencias */
+        .success { color: #50fa7b; } /* Verde claro para éxito */
+        .title-text { color: #00ff7f; font-weight: 700; margin-bottom: 10px; }
 
-
-        .btn-distribute {
-            background-image: linear-gradient(to right, #00ca4e, #008032);
-            box-shadow: 0 4px #005020;
-            transition: all 0.1s;
+        .btn-protocol {
+            background-color: #ffaa00; /* Naranja/Ámbar */
+            color: #1b2b22;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 700;
+            transition: background-color 0.3s, transform 0.1s;
+            width: 100%;
+            text-transform: uppercase;
         }
 
-        .btn-distribute:active {
-            box-shadow: 0 2px #005020;
-            transform: translateY(2px);
+        .btn-protocol:hover {
+            background-color: #ffc66d;
+            transform: translateY(-1px);
         }
 
-        /* Modal (sin cambios, para manejo de errores) */
-        .modal {
+        .btn-protocol:disabled {
+            background-color: #4a4a4a;
+            color: #8d8d8d;
+            cursor: not-allowed;
+        }
+
+        .protocol-title {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #00ff7f;
+            margin-bottom: 30px;
+        }
+
+        /* Modal Styles */
+        #modal {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
+            background-color: rgba(0, 0, 0, 0.8);
             display: none;
             justify-content: center;
             align-items: center;
             z-index: 1000;
         }
-
-        .modal-content {
-            background-color: #2d3748;
-            padding: 30px;
+        #modal-content {
+            background: #1b2b22;
+            padding: 25px;
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            border: 1px solid #ffaa00;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
             max-width: 400px;
             width: 90%;
             text-align: center;
-            border: 1px solid #4a5568;
-        }
-
-        .modal-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 15px;
-        }
-
-        .modal-message {
-            color: #cbd5e0;
-            margin-bottom: 25px;
-        }
-
-        .modal-button {
-            background-color: #48bb78;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
-            font-weight: 700;
-            transition: background-color 0.2s;
-        }
-
-        .modal-button:hover {
-            background-color: #38a169;
         }
     </style>
+     <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, where, addDoc, getDocs, updateDoc, deleteDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let app = null;
+        let db = null;
+        let auth = null;
+        let userId = null;
+        let isFirebaseReady = false;
+
+        window.appId = appId;
+        window.firebaseConfig = firebaseConfig;
+        window.initialAuthToken = initialAuthToken;
+        window.getUserId = () => userId;
+        window.getDB = () => db;
+
+        // Utility to format Firestore paths
+        const getPrivateDocRef = (collectionName, documentId) => doc(db, 'artifacts', appId, 'users', userId, collectionName, documentId);
+        const getPrivateCollectionRef = (collectionName) => collection(db, 'artifacts', appId, 'users', userId, collectionName);
+        window.path = {
+            getPrivateDocRef,
+            getPrivateCollectionRef,
+        };
+
+        function addLog(message, type = 'info') {
+            const logElement = document.getElementById('terminal-log');
+            if (logElement) {
+                const now = new Date();
+                const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+                const newLine = document.createElement('div');
+                newLine.className = `log-line ${type}`;
+                newLine.textContent = `[${time}] > ${message}`;
+                logElement.appendChild(newLine);
+                logElement.scrollTop = logElement.scrollHeight; // Auto-scroll
+            }
+        }
+        window.addLog = addLog;
+
+        function showMessage(title, body, type = 'info') {
+            const modal = document.getElementById('modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            const acceptButton = document.getElementById('modal-accept');
+
+            modalTitle.textContent = title;
+            modalBody.innerHTML = body; // Usar innerHTML para permitir saltos de línea y formateo
+            
+            // Establecer color de borde y texto basado en el tipo
+            const modalContent = document.getElementById('modal-content');
+            modalContent.style.borderColor = type === 'error' ? '#ff5555' : (type === 'success' ? '#00ff7f' : '#ffaa00');
+
+            modal.style.display = 'flex';
+            
+            return new Promise(resolve => {
+                const handler = () => {
+                    modal.style.display = 'none';
+                    acceptButton.removeEventListener('click', handler);
+                    resolve();
+                };
+                acceptButton.addEventListener('click', handler);
+            });
+        }
+        window.showMessage = showMessage;
+
+        async function initializeFirebase() {
+            if (firebaseConfig) {
+                try {
+                    // setLogLevel('debug'); // Descomentar para ver logs de Firestore en la consola
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+
+                    addLog("INICIANDO NÚCLEO del Protocolo V13...", 'info');
+                    addLog(`ID de la Aplicación: ${appId}`, 'info');
+
+                    onAuthStateChanged(auth, async (user) => {
+                        if (user) {
+                            userId = user.uid;
+                            addLog(`CONEXIÓN FIREBASE ESTABLECIDA. UID: ${userId.substring(0, 8)}...`, 'success');
+                            isFirebaseReady = true;
+                            // Intentar iniciar el protocolo principal solo si Firebase está listo
+                            await startProtocol(); 
+                        } else {
+                            // Si no hay usuario, intentar firmar de forma anónima o con token
+                            try {
+                                if (initialAuthToken) {
+                                    await signInWithCustomToken(auth, initialAuthToken);
+                                    addLog("Autenticación con token personalizada exitosa.", 'success');
+                                } else {
+                                    await signInAnonymously(auth);
+                                    addLog("Autenticación anónima exitosa.", 'success');
+                                }
+                            } catch (error) {
+                                addLog(`ERROR DE AUTENTICACIÓN: ${error.message}`, 'error');
+                                isFirebaseReady = true; // Permite el modo Offline si la autenticación falla
+                                await startProtocol();
+                            }
+                        }
+                    });
+
+                } catch (error) {
+                    addLog(`ERROR: Fallo al inicializar Firebase: ${error.message}`, 'error');
+                    isFirebaseReady = true; // Permite el modo Offline si la inicialización falla
+                    await startProtocol();
+                }
+            } else {
+                addLog("ADVERTENCIA: Configuración de Firebase no disponible. Ejecutando en MODO OFFLINE/DEMO.", 'warning');
+                isFirebaseReady = true;
+                await startProtocol();
+            }
+        }
+        window.initializeFirebase = initializeFirebase;
+
+        // --- LÓGICA ESPECÍFICA DEL PROTOCOLO V13 ---
+
+        const BLINDAJE_COLLECTION = 'blindajes';
+        const PENDIENTE_PAGO = 'PENDIENTE_PAGO';
+        const BLINDAJE_ACTIVO = 'BLINDAJE_ACTIVO';
+        const OFFLINE_MODE = !firebaseConfig;
+        
+        // Simulación de generación de dirección (para modo offline)
+        const generateSimulatedAddress = () => "THJ65N2uWc9XY7e7uH9K3P4H8RG2T9V";
+
+        /**
+         * Función principal para iniciar o reanudar el protocolo V13.
+         */
+        async function startProtocol() {
+            const btn = document.getElementById('exec-btn');
+            btn.disabled = true;
+            btn.textContent = 'EJECUTANDO...';
+
+            addLog("EJECUTANDO PROTOCOLO BLINDAJE V13...", 'info');
+
+            try {
+                // 1. Verificar si ya existe un registro de Blindaje Activo
+                let blindajeDoc = await checkExistingBlindaje();
+
+                if (blindajeDoc) {
+                    // Si existe, reanudar
+                    await resumeBlindaje(blindajeDoc);
+                } else if (!OFFLINE_MODE) {
+                    // Si no existe y estamos en modo real, crear uno nuevo
+                    await createNewBlindaje();
+                } else {
+                    // Modo Offline (Demo)
+                    await createNewBlindaje(true);
+                }
+
+            } catch (error) {
+                addLog(`ERROR CRÍTICO: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'EJECUTAR PROTOCOLO BLINDAJE V13';
+            }
+        }
+
+        /**
+         * Verifica si existe un documento de blindaje en estado PENDIENTE_PAGO o BLINDAJE_ACTIVO.
+         * @returns {Object|null} El documento si existe, o null.
+         */
+        async function checkExistingBlindaje() {
+            if (OFFLINE_MODE) {
+                 addLog("MODO OFFLINE DETECTADO. No se verificará en Firestore.", 'warning');
+                 return null;
+            }
+
+            addLog("Verificando existencia de Blindaje Activo en Firestore...", 'info');
+
+            // Intenta buscar el documento por UID. El ID del documento es el UID del usuario.
+            const blindajeRef = path.getPrivateDocRef(BLINDAJE_COLLECTION, userId);
+            const docSnap = await getDoc(blindajeRef);
+
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.estado === PENDIENTE_PAGO || data.estado === BLINDAJE_ACTIVO) {
+                    addLog(`Blindaje ENCONTRADO. Estado: ${data.estado}.`, 'success');
+                    return { id: docSnap.id, ...data };
+                }
+            }
+            addLog("No se encontró Blindaje activo o pendiente de pago.", 'info');
+            return null;
+        }
+
+        /**
+         * Crea un nuevo registro de blindaje.
+         * @param {boolean} isDemo - Si es true, simula la creación para el modo offline.
+         */
+        async function createNewBlindaje(isDemo = false) {
+            addLog(`Ejecutando Blindaje V13... [${isDemo ? 'OFFLINE/DEMO' : 'MODO REAL'}]`, 'info');
+
+            const newBlindaje = {
+                fechaCreacion: new Date().toISOString(),
+                estado: PENDIENTE_PAGO,
+                direccionDeposito: isDemo ? generateSimulatedAddress() : 'TBD', // La dirección real se genera después de que el usuario la proporciona
+                userId: userId || 'demo-user',
+                isDemo: isDemo
+            };
+
+            let blindajeId = userId || crypto.randomUUID();
+            let depositAddress = newBlindaje.direccionDeposito;
+
+            if (!isDemo) {
+                // Modo Real: Pedir la dirección al usuario
+                const userAddress = await showAddressInput();
+                if (!userAddress) {
+                    addLog("Cancelado. Se requiere una dirección de criptomoneda válida para continuar.", 'error');
+                    return;
+                }
+                newBlindaje.direccionDeposito = userAddress;
+                depositAddress = userAddress;
+
+                // Guardar en Firestore
+                addLog("Creando registro en Firestore...", 'info');
+                const blindajeRef = path.getPrivateDocRef(BLINDAJE_COLLECTION, blindajeId);
+                await setDoc(blindajeRef, newBlindaje);
+                addLog("REGISTRO DE BLINDAJE CREADO EXITOSAMENTE.", 'success');
+            } else {
+                 addLog("REGISTRO DE BLINDAJE CREADO exitosamente (Simulación).", 'success');
+            }
+            
+            // Mostrar mensaje al usuario para el depósito
+            await showBlindajeDetails(blindajeId, newBlindaje.estado, depositAddress);
+
+            if (!isDemo) {
+                // Iniciar escucha en Firestore para el Modo Real
+                listenForBlindajeConfirmation(blindajeId);
+            }
+        }
+        
+        /**
+         * Solicita al usuario que ingrese la dirección de criptomoneda para el blindaje.
+         */
+        function showAddressInput() {
+            return new Promise(resolve => {
+                const modal = document.getElementById('modal');
+                const modalTitle = document.getElementById('modal-title');
+                const modalBody = document.getElementById('modal-body');
+                const modalContent = document.getElementById('modal-content');
+                
+                modalTitle.textContent = 'PROTOCOLO V13: Configuración Real';
+                modalBody.innerHTML = `
+                    <p class="text-white mb-4 text-left">
+                        Para activar el **Blindaje en Modo Real**, introduzca la dirección de la billetera de criptomoneda (TRC20, BEP20, etc.) que usará para el depósito de blindaje.
+                    </p>
+                    <input id="user-address-input" type="text" placeholder="Ej: TUQY4zSyA6B87c8D9E0FGfH2H34JSK6"
+                           class="w-full p-2 mb-4 bg-gray-700 text-white rounded-md border border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500" />
+                    <div class="flex justify-end space-x-3">
+                        <button id="modal-cancel" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md font-semibold transition">Cancelar</button>
+                        <button id="modal-submit" class="bg-yellow-600 hover:bg-yellow-500 text-black py-2 px-4 rounded-md font-semibold transition">Continuar</button>
+                    </div>
+                `;
+                
+                // Sobreescribir el botón de Aceptar para evitar conflicto
+                const acceptButton = document.getElementById('modal-accept');
+                if (acceptButton) acceptButton.style.display = 'none';
+
+                modal.style.display = 'flex';
+                modalContent.style.borderColor = '#ffaa00'; // Naranja
+
+                const cancelButton = document.getElementById('modal-cancel');
+                const submitButton = document.getElementById('modal-submit');
+                const inputElement = document.getElementById('user-address-input');
+
+                const cleanup = () => {
+                    modal.style.display = 'none';
+                    cancelButton.removeEventListener('click', handleCancel);
+                    submitButton.removeEventListener('click', handleSubmit);
+                    if (acceptButton) acceptButton.style.display = 'block';
+                };
+
+                const handleCancel = () => {
+                    cleanup();
+                    resolve(null); // Retorna null si se cancela
+                };
+
+                const handleSubmit = () => {
+                    const address = inputElement.value.trim();
+                    if (address.length > 20) { // Validación básica
+                        cleanup();
+                        resolve(address);
+                    } else {
+                        showMessage('Error de Dirección', 'Por favor, introduzca una dirección de criptomoneda válida y completa.', 'error');
+                    }
+                };
+
+                cancelButton.addEventListener('click', handleCancel);
+                submitButton.addEventListener('click', handleSubmit);
+                // Permitir Enter
+                inputElement.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        handleSubmit();
+                    }
+                });
+            });
+        }
+
+
+        /**
+         * Reanuda el protocolo basándose en un registro existente.
+         * @param {Object} docData - Datos del documento de blindaje.
+         */
+        async function resumeBlindaje(docData) {
+            addLog(`REANUDANDO Blindaje V13... Estado: ${docData.estado}`, 'warning');
+            
+            if (docData.estado === PENDIENTE_PAGO) {
+                // Si está pendiente de pago, mostrar los detalles y seguir escuchando
+                await showBlindajeDetails(docData.id, docData.estado, docData.direccionDeposito);
+                if (!docData.isDemo) {
+                    listenForBlindajeConfirmation(docData.id);
+                }
+            } else if (docData.estado === BLINDAJE_ACTIVO) {
+                // Si ya está activo, mostrar mensaje y el botón de Aterrizaje
+                addLog("Blindaje V13 se encuentra en estado ACTIVO. Listo para ATERRIZAJE (DCA).", 'success');
+                // CAMBIAR BOTÓN para la siguiente fase (DCA)
+                document.getElementById('exec-btn').classList.remove('btn-protocol');
+                document.getElementById('exec-btn').classList.add('bg-green-600', 'hover:bg-green-500', 'text-white', 'py-3', 'px-6', 'rounded-md', 'font-bold', 'transition');
+                document.getElementById('exec-btn').textContent = 'INICIAR DISTRIBUCIÓN DCA (ATERRIZAJE)';
+                document.getElementById('exec-btn').onclick = () => showMessage('Sistema Activo', 'El Blindaje está ACTIVO. Ahora puede cargar el módulo de Aterrizaje (DCA) para continuar la distribución del capital. ', 'success');
+                // Deshabilitar la re-ejecución del protocolo de blindaje
+                document.getElementById('exec-btn').disabled = false;
+            }
+        }
+
+        /**
+         * Muestra los detalles del blindaje (dirección y estado) al usuario en un modal.
+         */
+        async function showBlindajeDetails(id, estado, direccion) {
+            const isDemo = estado === PENDIENTE_PAGO && direccion === generateSimulatedAddress();
+            
+            const messageTitle = isDemo ? 'SOLICITUD V13 CREADA EN MODO OFFLINE' : 'PROTOCOLO V13: PENDIENTE DE PAGO';
+            const messageBody = `
+                <p class="text-white mb-2 font-semibold">Estado: <span class="text-yellow-500">${estado}</span></p>
+                <p class="text-white mb-4 font-semibold">Dirección de Depósito:</p>
+                <div class="bg-gray-800 p-3 rounded-md break-all text-sm font-mono text-yellow-400">
+                    ${direccion}
+                </div>
+                ${isDemo ? 
+                    '<p class="mt-4 text-gray-400 text-sm">Instrucción (DEMO): Deposite el monto a esta dirección para activar el blindaje (Modo Demo).</p>' :
+                    '<p class="mt-4 text-white font-semibold">Instrucción: Deposite el monto necesario a la dirección indicada para activar el Blindaje en Modo Real.</p>'
+                }
+            `;
+            await showMessage(messageTitle, messageBody, isDemo ? 'warning' : 'info');
+        }
+
+
+        /**
+         * Escucha los cambios en el documento de blindaje en Firestore.
+         */
+        function listenForBlindajeConfirmation(blindajeId) {
+            if (OFFLINE_MODE || !db || !userId) {
+                return; // Solo para Modo Real
+            }
+
+            const blindajeRef = path.getPrivateDocRef(BLINDAJE_COLLECTION, blindajeId);
+            addLog("Iniciando escucha en tiempo real para confirmación de depósito...", 'info');
+
+            onSnapshot(blindajeRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.estado === BLINDAJE_ACTIVO) {
+                        addLog("¡DEPÓSITO CONFIRMADO! Blindaje V13 ACTIVADO.", 'success');
+                        // Mostrar mensaje de éxito y cambiar a la fase DCA
+                        showMessage('Blindaje Activado', 'El Blindaje V13 ha sido confirmado y está ACTIVO. Ahora puede proceder a la fase de Aterrizaje (DCA).', 'success')
+                            .then(() => resumeBlindaje(data)); // Reanudar para cambiar el botón
+                    } else if (data.estado === PENDIENTE_PAGO) {
+                        // El estado sigue siendo PENDIENTE_PAGO, no hacemos nada más que el mensaje inicial
+                        addLog("Esperando confirmación de depósito...", 'info');
+                    }
+                } else {
+                    addLog("El registro de Blindaje ya no existe.", 'error');
+                }
+            }, (error) => {
+                addLog(`ERROR EN ESCUCHA DE BLINDAJE: ${error.message}`, 'error');
+            });
+        }
+
+
+        window.onload = initializeFirebase;
+    </script>
 </head>
 <body>
-
     <div id="terminal-card">
-        <div class="terminal-header">
-            <div class="header-dots">
-                <div class="dot-red"></div>
-                <div class="dot-yellow"></div>
-                <div class="dot-green"></div>
-            </div>
-            <span>SISTEMA DCA V13 - <span id="protocol-status">BUSCANDO BLINDAJE...</span></span>
+        <div class="protocol-title">
+            PROTOCOLO V13: BLINDAJE
         </div>
-
-        <!-- Panel de Control y Parámetros -->
-        <div class="control-panel">
-            <h2 class="text-xl font-bold text-white mb-2 border-b border-gray-600 pb-2">Parámetros de Aterrizaje (DCA)</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="input-group">
-                    <label for="total-capital">Capital Total a Distribuir (Simulación)</label>
-                    <input type="number" id="total-capital" value="500000" min="1" placeholder="Ej: 500000" disabled>
-                </div>
-                <div class="input-group">
-                    <label for="num-wallets">Número de Lotes/Billeteras de Destino</label>
-                    <input type="number" id="num-wallets" value="10" min="2" max="100" placeholder="Ej: 10">
-                </div>
-            </div>
-            <button id="distribute-button" class="btn-distribute w-full py-3 rounded-xl text-white font-bold text-lg" disabled>
-                INICIAR DISTRIBUCIÓN DCA (ATERRIZAJE)
-            </button>
+        
+        <div class="terminal-log" id="terminal-log">
+            <div class="log-line info">...</div>
         </div>
-
-        <!-- Área de Log y Resumen -->
-        <div id="log-area-container">
-            <div id="log-area" class="log-area">
-                <!-- Log de Transacciones -->
-            </div>
-            <div id="summary-area" class="summary-area">
-                <div class="log-summary-title">Resumen de Distribución</div>
-                <p id="summary-status">Esperando inicio de distribución...</p>
-                <!-- Aquí se llenará el resumen -->
-            </div>
-        </div>
-
+        
+        <button id="exec-btn" class="btn-protocol" onclick="startProtocol()">
+            EJECUTAR PROTOCOLO BLINDAJE V13
+        </button>
+        <p class="text-center text-xs text-gray-500 mt-4">ID de Usuario: <span id="user-id-display">Cargando...</span></p>
     </div>
 
-    <!-- Modal genérico para mensajes (reemplaza alert) -->
-    <div id="message-modal" class="modal">
-        <div class="modal-content">
-            <div id="message-modal-title" class="modal-title">Mensaje del Sistema</div>
-            <div id="message-modal-message" class="modal-message"></div>
-            <button id="message-modal-button" class="modal-button">Aceptar</button>
+    <!-- Modal para mensajes y entradas -->
+    <div id="modal">
+        <div id="modal-content" class="rounded-lg">
+            <h3 id="modal-title" class="text-xl font-bold mb-3 text-yellow-400">Título</h3>
+            <div id="modal-body" class="text-gray-300 mb-5">Cuerpo del mensaje.</div>
+            <button id="modal-accept" class="bg-yellow-600 hover:bg-yellow-500 text-black py-2 px-4 rounded-md font-semibold transition">Aceptar</button>
         </div>
-
+    </div>
 
     <script>
-        // Variables globales del DOM
-        let logArea;
-        let protocolStatusElement;
-        let distributeButton;
-        let summaryArea;
-        let summaryStatus;
-
-        // Variables de Estado
-        let systemState = 'INACTIVO';
-        const BASE_WALLET_ADDRESS = "T1P2X3Y4Z5A6B7C8D9E0F1G2H3I4J5K6L7M8N9O0P1Q2R3S4";
-
+        // Muestra el ID de usuario una vez que esté disponible
         document.addEventListener('DOMContentLoaded', () => {
-            // Inicializar elementos del DOM
-            logArea = document.getElementById('log-area');
-            protocolStatusElement = document.getElementById('protocol-status');
-            distributeButton = document.getElementById('distribute-button');
-            summaryArea = document.getElementById('summary-area');
-            summaryStatus = document.getElementById('summary-status');
-
-            // Event Listeners
-            distributeButton.addEventListener('click', handleDistribution);
-            document.getElementById('message-modal-button').addEventListener('click', hideMessageModal);
-
-            // Iniciar el sistema y buscar el blindaje
-            logMessage('INICIANDO MÓDULO DCA V13...', 'success');
-            setTimeout(initializeSystem, 1500);
+            const checkUser = setInterval(() => {
+                const userId = window.getUserId ? window.getUserId() : null;
+                if (userId) {
+                    document.getElementById('user-id-display').textContent = userId;
+                    clearInterval(checkUser);
+                } else {
+                    // Muestra el ID de la aplicación si el ID de usuario aún no está disponible (pre-auth)
+                    document.getElementById('user-id-display').textContent = 'App ID: ' + window.appId;
+                }
+            }, 500);
         });
-
-        // --- Funciones de Utilidad de Log y Modal ---
-
-        function logMessage(message, type = '') {
-            const line = document.createElement('div');
-            line.className = `log-line ${type ? 'log-' + type : ''}`;
-            line.textContent = `> ${message}`;
-            logArea.appendChild(line);
-            logArea.scrollTop = logArea.scrollHeight;
-        }
-        
-        function showMessageModal(title, message) {
-            document.getElementById('message-modal-title').textContent = title;
-            document.getElementById('message-modal-message').textContent = message;
-            document.getElementById('message-modal').style.display = 'flex';
-        }
-
-        function hideMessageModal() {
-            document.getElementById('message-modal').style.display = 'none';
-        }
-        
-        function updateSummary(totalDistributed, numLotes, montoPorLote, tiempoEstimado) {
-            summaryArea.innerHTML = `
-                <div class="log-summary-title">Resumen de Distribución</div>
-                <p class="text-white mb-2">Estado: <span class="log-success font-bold">${systemState}</span></p>
-                <hr class="border-gray-600 my-2">
-                <p>Capital Total: <span class="font-bold text-lg">${formatCurrency(totalDistributed)}</span></p>
-                <p>Lotes de Distribución: <span class="font-bold">${numLotes}</span></p>
-                <p>Monto por Lote: <span class="font-bold log-dca">${formatCurrency(montoPorLote)}</span></p>
-                <p>Transacciones/Segundo: <span class="font-bold">2.5 tps (Sim.)</span></p>
-                <p>Tiempo Estimado: <span class="font-bold log-instruction">${tiempoEstimado}</span></p>
-                <hr class="border-gray-600 my-2">
-                <p>Billetera Base: <span class="text-sm text-gray-400 break-all">${BASE_WALLET_ADDRESS}</span></p>
-            `;
-        }
-        
-        function formatCurrency(amount) {
-            // Simulación de formato de moneda con USD
-            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
-        }
-
-        // --- Lógica del Sistema ---
-
-        function initializeSystem() {
-            logMessage('CONECTANDO al estado de "Blindaje Activo"...', 'pending');
-            
-            // Simular que el blindaje está listo
-            setTimeout(() => {
-                systemState = 'BLINDAJE_ACTIVO';
-                protocolStatusElement.textContent = 'BLINDAJE ACTIVO - LISTO DCA';
-                distributeButton.disabled = false;
-                distributeButton.textContent = 'INICIAR DISTRIBUCIÓN DCA (ATERRIZAJE)';
-                logMessage('CONEXIÓN ESTABLECIDA. Capital blindado listo para Aterrizaje.', 'success');
-                logMessage('Instrucción: Defina los parámetros y pulse Iniciar Distribución.', 'instruction');
-                
-                // Cargar resumen inicial
-                const total = parseFloat(document.getElementById('total-capital').value);
-                const numWallets = parseFloat(document.getElementById('num-wallets').value);
-                updateSummary(total, numWallets, total / numWallets, 'Aún no calculado');
-
-            }, 2000);
-        }
-
-        /**
-         * Genera una dirección de billetera simulada.
-         * @param {number} index - Índice del lote para hacerlo único.
-         */
-        function generateDestinationAddress(index) {
-            // Genera una dirección pseudo-única basada en la base y el índice
-            const base = BASE_WALLET_ADDRESS.substring(0, BASE_WALLET_ADDRESS.length - 2);
-            const indexStr = index.toString().padStart(2, '0');
-            return base + indexStr;
-        }
-
-        /**
-         * Simula el proceso de Distribución Centralizada de Activos (DCA).
-         */
-        async function handleDistribution() {
-            if (systemState !== 'BLINDAJE_ACTIVO') {
-                showMessageModal('ERROR', 'El Blindaje no está activo o la conexión se perdió. Intente recargar.');
-                return;
-            }
-
-            const totalCapitalInput = document.getElementById('total-capital');
-            const numWalletsInput = document.getElementById('num-wallets');
-
-            const totalCapital = parseFloat(totalCapitalInput.value);
-            const numWallets = parseInt(numWalletsInput.value, 10);
-
-            if (isNaN(totalCapital) || totalCapital <= 0 || isNaN(numWallets) || numWallets < 2) {
-                showMessageModal('ERROR DE PARÁMETRO', 'Asegúrese de que el capital sea positivo y el número de lotes sea al menos 2.');
-                return;
-            }
-
-            // Inhabilitar controles
-            distributeButton.disabled = true;
-            totalCapitalInput.disabled = true;
-            numWalletsInput.disabled = true;
-            systemState = 'DCA_EN_PROCESO';
-            protocolStatusElement.textContent = 'DCA EN PROCESO';
-            distributeButton.textContent = 'DISTRIBUCIÓN EN CURSO...';
-
-            logMessage('INICIANDO PROCESO DCA V13...', 'success');
-            logMessage(`Dividiendo ${formatCurrency(totalCapital)} en ${numWallets} lotes.`, 'instruction');
-
-            const amountPerWallet = totalCapital / numWallets;
-            let totalDistributed = 0;
-            const startTime = Date.now();
-
-            updateSummary(totalCapital, numWallets, amountPerWallet, 'Calculando...');
-
-
-            // Iteración de distribución
-            for (let i = 1; i <= numWallets; i++) {
-                const destinationAddress = generateDestinationAddress(i);
-                
-                // Simular un pequeño retraso (para el log visual)
-                await new Promise(resolve => setTimeout(resolve, 300));
-
-                totalDistributed += amountPerWallet;
-
-                logMessage(
-                    `LOTE ${i.toString().padStart(2, '0')}/${numWallets}: Transfiriendo ${formatCurrency(amountPerWallet)} a ${destinationAddress}`, 
-                    'dca'
-                );
-
-                const elapsedSeconds = (Date.now() - startTime) / 1000;
-                const remainingTime = (elapsedSeconds / i) * (numWallets - i);
-                const timeStr = remainingTime > 60 ? 
-                                `${(remainingTime / 60).toFixed(1)} min` : 
-                                `${remainingTime.toFixed(1)} seg`;
-
-                updateSummary(totalCapital, numWallets, amountPerWallet, timeStr + ' restante');
-            }
-
-            // Finalización
-            systemState = 'DCA_FINALIZADO';
-            protocolStatusElement.textContent = 'DCA FINALIZADO';
-            distributeButton.textContent = 'DCA FINALIZADO - CAPITAL ATERRIZADO';
-            distributeButton.classList.remove('btn-distribute');
-            distributeButton.classList.add('bg-gray-600');
-
-            const finalTime = ((Date.now() - startTime) / 1000).toFixed(1) + ' segundos';
-            updateSummary(totalCapital, numWallets, amountPerWallet, finalTime + ' (Completado)');
-            
-            logMessage('*** DISTRIBUCIÓN DCA COMPLETA ***', 'success');
-            logMessage(`Capital total aterrizado en ${numWallets} lotes en ${finalTime}.`, 'success');
-            logMessage('Sistema de Aterrizaje V13 en MODO INACTIVO.', 'instruction');
-        }
     </script>
 </body>
 </html>
+
 
 
 
