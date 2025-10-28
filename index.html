@@ -3,580 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Protocolo V13 | Solicitud de Blindaje</title>
+    <title>Protocolo V13 - Blindaje Omega Sigma</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0b1117; /* Fondo oscuro tipo consola */
-            color: #ffffff;
+            font-family: 'Space Mono', monospace;
+            background-color: #0d1117; /* Dark GitHub background */
+            color: #c9d1d9; /* Light gray text */
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            padding: 20px;
+            margin: 0;
+            padding: 1rem;
         }
-
-        #terminal-card {
-            background: #1b2b22; /* Color de tarjeta más oscuro */
-            border: 1px solid #30363d;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
-            border-radius: 12px;
+        .terminal-container {
             width: 100%;
             max-width: 600px;
-            padding: 30px;
+            background-color: #161b22; /* Darker terminal background */
+            border: 2px solid #30363d;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+            animation: glow 1.5s infinite alternate;
         }
-
-        .terminal-log {
-            height: 300px;
-            background-color: #000000;
-            padding: 15px;
-            border-radius: 8px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            margin-bottom: 20px;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            border: 1px solid #00ff7f; /* Borde verde brillante */
+        @keyframes glow {
+            from { box-shadow: 0 0 10px rgba(0, 255, 255, 0.2); }
+            to { box-shadow: 0 0 20px rgba(0, 255, 255, 0.4); }
         }
-
-        .log-line {
-            line-height: 1.5;
+        .status-box {
+            border-left: 4px solid;
+            padding: 0.5rem 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
         }
-
-        .prompt { color: #00ff7f; } /* Verde para el prompt */
-        .info { color: #ffffff; } /* Blanco para la información */
-        .error { color: #ff5555; } /* Rojo para errores */
-        .warning { color: #ffaa00; } /* Amarillo para advertencias */
-        .success { color: #50fa7b; } /* Verde claro para éxito */
-        .title-text { color: #00ff7f; font-weight: 700; margin-bottom: 10px; }
-
-        .btn-protocol {
-            background-color: #ffaa00; /* Naranja/Ámbar */
-            color: #1b2b22;
-            padding: 12px 25px;
-            border-radius: 8px;
-            font-weight: 700;
-            transition: background-color 0.3s, transform 0.1s;
-            width: 100%;
-            text-transform: uppercase;
-        }
-
-        .btn-protocol:hover {
-            background-color: #ffc66d;
-            transform: translateY(-1px);
-        }
-
-        .btn-protocol:disabled {
-            background-color: #4a4a4a;
-            color: #8d8d8d;
-            cursor: not-allowed;
-        }
-
-        .protocol-title {
-            text-align: center;
-            font-size: 2rem;
-            font-weight: 700;
-            color: #00ff7f;
-            margin-bottom: 30px;
-        }
-
-        /* Modal Styles - Genérico */
-        #modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        #modal-content {
-            background: #1b2b22;
-            padding: 25px;
-            border-radius: 10px;
-            border: 1px solid #ffaa00;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
-            max-width: 400px;
-            width: 90%;
-            text-align: center;
-        }
-
-        /* Modal Styles - Input de Dirección */
-        #address-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000; /* Mayor que el modal genérico */
-        }
+        .status-ready { border-color: #38a169; background-color: rgba(56, 161, 105, 0.1); color: #48bb78; }
+        .status-loading { border-color: #f6ad55; background-color: rgba(246, 173, 85, 0.1); color: #f6e05e; }
+        .status-error { border-color: #e53e3e; background-color: rgba(229, 62, 62, 0.1); color: #fc8181; }
+        .status-success { border-color: #0bc5ea; background-color: rgba(11, 197, 234, 0.1); color: #00bcd4; }
     </style>
-     <!-- Firebase SDK -->
+</head>
+<body>
+
+    <div id="app" class="terminal-container p-6 md:p-8">
+        <h1 class="text-2xl font-bold mb-4 text-[#0ff] text-center uppercase tracking-widest">
+            PROTOCOLO V13: BLINDAJE OMEGA SIGMA
+        </h1>
+        <p class="text-sm text-center mb-6 text-gray-400">
+            Terminal de Sincronización (SYNC-POINT)
+        </p>
+
+        <!-- AREA DE ESTADO DEL SISTEMA -->
+        <div id="system-status" class="status-box status-loading">
+            <p class="font-bold">Estado del Núcleo:</p>
+            <p id="auth-status-text" class="text-sm">Inicializando Infraestructura...</p>
+        </div>
+
+        <div id="user-info" class="mb-6 hidden">
+            <p class="text-xs text-gray-500 mb-1">ID del Punto de Sincronización (SYNC-POINT):</p>
+            <code id="user-id-display" class="bg-[#30363d] text-[#ff0] p-1 rounded text-sm break-all"></code>
+        </div>
+
+        <!-- FORMULARIO BLINDAJE T-01 -->
+        <div id="blindaje-form-area" class="mt-8">
+            <h2 class="text-xl text-[#0ff] mb-4">BLINDAJE T-01: Transacción de Origen</h2>
+
+            <div class="mb-4">
+                <label for="crypto-address" class="block text-sm font-medium mb-2 text-gray-300">
+                    Dirección Pública (Proof of Origin)
+                </label>
+                <input type="text" id="crypto-address" placeholder="Ej: 0xAbC123... (Dirección de Billetera Real)"
+                       class="w-full px-4 py-3 bg-[#0d1117] border border-[#30363d] rounded-lg focus:ring-cyan-500 focus:border-cyan-500 text-white placeholder-gray-500 transition-colors duration-200">
+            </div>
+
+            <button id="activate-button" onclick="handleBlindajeT01()"
+                    class="w-full bg-[#0ff] text-[#161b22] font-bold py-3 rounded-lg uppercase tracking-wider hover:bg-[#00ffff] hover:shadow-[0_0_15px_rgba(0,255,255,0.7)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled>
+                ACTIVAR BLINDAJE T-01
+            </button>
+        </div>
+
+        <!-- AREA DE MENSAJES Y RESULTADOS -->
+        <div id="message-container" class="mt-6 p-4 rounded-lg hidden">
+            <p id="message-text" class="text-sm"></p>
+        </div>
+    </div>
+
     <script type="module">
+        // Importaciones de Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global variables provided by the Canvas environment
+        // Variables Globales de Entorno
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        let app = null;
-        let db = null;
-        let auth = null;
-        let userId = null;
-        let isFirebaseReady = false;
+        // Referencias del DOM
+        const authStatusText = document.getElementById('auth-status-text');
+        const systemStatusBox = document.getElementById('system-status');
+        const activateButton = document.getElementById('activate-button');
+        const cryptoAddressInput = document.getElementById('crypto-address');
+        const userIdDisplay = document.getElementById('user-id-display');
+        const userInfoDiv = document.getElementById('user-info');
+        const messageContainer = document.getElementById('message-container');
+        const messageText = document.getElementById('message-text');
 
-        window.appId = appId;
-        window.firebaseConfig = firebaseConfig;
-        window.initialAuthToken = initialAuthToken;
-        window.getUserId = () => userId;
-        window.getDB = () => db;
+        let db;
+        let auth;
+        let userId = 'N/A';
+        let isAuthReady = false;
 
-        // Utility to format Firestore paths
-        const getPrivateDocRef = (collectionName, documentId) => doc(db, 'artifacts', appId, 'users', userId, collectionName, documentId);
-        window.path = { getPrivateDocRef };
-
-        function addLog(message, type = 'info') {
-            const logElement = document.getElementById('terminal-log');
-            if (logElement) {
-                const now = new Date();
-                const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-                const newLine = document.createElement('div');
-                newLine.className = `log-line ${type}`;
-                newLine.textContent = `[${time}] > ${message}`;
-                logElement.appendChild(newLine);
-                logElement.scrollTop = logElement.scrollHeight; // Auto-scroll
-            }
+        // Función para mostrar mensajes de estado/resultado
+        function displayMessage(text, type = 'status-success') {
+            messageContainer.classList.remove('hidden', 'status-ready', 'status-loading', 'status-error', 'status-success');
+            messageContainer.className = `mt-6 p-4 rounded-lg ${type}`;
+            messageText.textContent = text;
         }
-        window.addLog = addLog;
 
-        /**
-         * Muestra un modal de mensaje simple y espera la acción del usuario.
-         * Devuelve una promesa que se resuelve cuando se hace clic en 'Aceptar'.
-         */
-        function showMessage(title, body, type = 'info') {
-            return new Promise(resolve => {
-                const modal = document.getElementById('modal');
-                const modalTitle = document.getElementById('modal-title');
-                const modalBody = document.getElementById('modal-body');
-                let acceptButton = document.getElementById('modal-accept'); // Usar let
-                const modalContent = document.getElementById('modal-content');
+        // --- Configuración e Inicialización de Firebase ---
+        try {
+            // Habilitar el registro de debug para Firestore
+            setLogLevel('debug');
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
 
-                modalTitle.textContent = title;
-                modalBody.innerHTML = body;
-                
-                // Establecer color de borde basado en el tipo
-                modalContent.style.borderColor = type === 'error' ? '#ff5555' : (type === 'success' ? '#00ff7f' : '#ffaa00');
-                
-                // CRITICAL FIX: Clonar el botón para eliminar cualquier event listener anterior
-                // Esta es la solución definitiva al problema del botón atascado
-                const newButton = acceptButton.cloneNode(true);
-                acceptButton.parentNode.replaceChild(newButton, acceptButton);
-                acceptButton = newButton; // Reasignar la referencia al nuevo botón
+            // Escuchar cambios en el estado de autenticación
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    userIdDisplay.textContent = userId;
+                    userInfoDiv.classList.remove('hidden');
 
-                const handler = () => {
-                    modal.style.display = 'none';
-                    acceptButton.removeEventListener('click', handler);
-                    resolve();
-                };
-
-                acceptButton.addEventListener('click', handler);
-                modal.style.display = 'flex';
-            });
-        }
-        window.showMessage = showMessage;
-
-        async function initializeFirebase() {
-            const userIdDisplay = document.getElementById('user-id-display');
-            
-            if (firebaseConfig) {
-                try {
-                    // setLogLevel('debug'); // Descomentar para ver logs de Firestore en la consola
-                    app = initializeApp(firebaseConfig);
-                    db = getFirestore(app);
-                    auth = getAuth(app);
-
-                    addLog("INICIANDO NÚCLEO del Protocolo V13...", 'info');
-                    addLog(`ID de la Aplicación: ${appId}`, 'info');
-
-                    onAuthStateChanged(auth, async (user) => {
-                        if (user) {
-                            userId = user.uid;
-                            userIdDisplay.textContent = userId;
-                            addLog(`CONEXIÓN FIREBASE ESTABLECIDA. UID: ${userId.substring(0, 8)}...`, 'success');
-                            isFirebaseReady = true;
-                            await startProtocol(false); // Iniciar de inmediato
+                    systemStatusBox.className = 'status-box status-ready';
+                    authStatusText.textContent = 'Núcleo Online. SYNC-POINT Verificado. Listo para T-01.';
+                    activateButton.disabled = false;
+                    isAuthReady = true;
+                } else {
+                    // Si no hay usuario autenticado, intentar iniciar sesión
+                    try {
+                        if (initialAuthToken) {
+                            await signInWithCustomToken(auth, initialAuthToken);
                         } else {
-                            try {
-                                if (initialAuthToken) {
-                                    await signInWithCustomToken(auth, initialAuthToken);
-                                    addLog("Autenticación con token personalizada exitosa.", 'success');
-                                } else {
-                                    await signInAnonymously(auth);
-                                    addLog("Autenticación anónima exitosa.", 'success');
-                                }
-                            } catch (error) {
-                                addLog(`ERROR DE AUTENTICACIÓN: ${error.message}`, 'error');
-                                isFirebaseReady = true; 
-                                await startProtocol(false); // Iniciar aunque falle la auth
-                            }
+                            // En caso de fallo en el token, iniciar sesión de forma anónima
+                            await signInAnonymously(auth);
                         }
-                    });
-
-                } catch (error) {
-                    addLog(`ERROR: Fallo al inicializar Firebase: ${error.message}`, 'error');
-                    isFirebaseReady = true; 
-                    await startProtocol(false); // Iniciar aunque falle la inicialización
+                    } catch (error) {
+                        console.error("Error de autenticación:", error);
+                        systemStatusBox.className = 'status-box status-error';
+                        authStatusText.textContent = 'Error: Fallo crítico de autenticación. Protocolo detenido.';
+                        activateButton.disabled = true;
+                        isAuthReady = false;
+                        displayMessage(`ERROR [A-01]: Fallo al establecer la conexión con el servidor. ${error.message}`, 'status-error');
+                    }
                 }
-            } else {
-                addLog("ADVERTENCIA: Configuración de Firebase no disponible. Ejecutando en MODO OFFLINE/DEMO.", 'warning');
-                userId = 'demo-user-' + appId; 
-                userIdDisplay.textContent = userId;
-                isFirebaseReady = true;
-                // En modo demo, el botón se habilita al final de startProtocol o al cargar la página
-                await startProtocol(true);
-            }
+            });
+
+        } catch (error) {
+            console.error("Error al inicializar Firebase:", error);
+            systemStatusBox.className = 'status-box status-error';
+            authStatusText.textContent = 'Error: Fallo al inicializar la infraestructura del Núcleo.';
+            activateButton.disabled = true;
+            isAuthReady = false;
+            displayMessage(`ERROR [I-00]: Fallo de Inicialización del Núcleo. ${error.message}`, 'status-error');
         }
-        window.initializeFirebase = initializeFirebase;
 
-        // --- LÓGICA ESPECÍFICA DEL PROTOCOLO V13 ---
 
-        const BLINDAJE_COLLECTION = 'blindajes';
-        const PENDIENTE_PAGO = 'PENDIENTE_PAGO';
-        const BLINDAJE_ACTIVO = 'BLINDAJE_ACTIVO';
-        const OFFLINE_MODE = !firebaseConfig;
-        
-        // Simulación de generación de dirección (para modo offline)
-        const generateSimulatedAddress = () => "TX9F2P4H8RG2T9V7e7uH9K3PL65N2uWc";
-
-        /**
-         * Función principal para iniciar o reanudar el protocolo V13.
-         * El parámetro forceDemo se usa solo si initializeFirebase lo detecta.
-         */
-        async function startProtocol(forceDemo = false) {
-            const btn = document.getElementById('exec-btn');
-
-            if (!isFirebaseReady) {
-                // Si aún no está listo, solo habilitamos el botón para que el usuario pueda interactuar después de la carga
-                btn.textContent = 'EJECUTAR PROTOCOLO BLINDAJE V13';
-                btn.disabled = false;
+        // --- Función del Blindaje T-01 ---
+        window.handleBlindajeT01 = async () => {
+            if (!isAuthReady) {
+                displayMessage("Error: Núcleo no sincronizado o autenticación pendiente.", 'status-error');
                 return;
             }
 
-            // Deshabilitamos temporalmente el botón para evitar doble clic
-            btn.disabled = true;
-            btn.textContent = 'EJECUTANDO...';
+            const address = cryptoAddressInput.value.trim();
 
-            addLog("EJECUTANDO PROTOCOLO BLINDAJE V13...", 'info');
+            if (address.length < 20) {
+                displayMessage("Error: La dirección pública debe ser una cadena válida (mínimo 20 caracteres para simulación).", 'status-error');
+                return;
+            }
+
+            activateButton.disabled = true;
+            activateButton.textContent = 'EJECUTANDO T-01...';
+            displayMessage("Blindaje T-01 en curso. Conectando con Firestore...", 'status-loading');
 
             try {
-                let blindajeDoc = await checkExistingBlindaje();
-                const isDemo = forceDemo || OFFLINE_MODE;
+                // Ruta de la colección pública para el Blindaje T-01
+                const collectionPath = `artifacts/${appId}/public/data/blindaje_t01_requests`;
+                const blindajeCollection = collection(db, collectionPath);
 
-                if (blindajeDoc) {
-                    await resumeBlindaje(blindajeDoc);
-                } else if (!isDemo) {
-                    await createNewBlindaje(false); // Modo Real
-                } else {
-                    await createNewBlindaje(true); // Modo Offline (Demo)
-                }
-
-            } catch (error) {
-                addLog(`ERROR CRÍTICO: ${error.message}`, 'error');
-                btn.textContent = 'EJECUTAR PROTOCOLO BLINDAJE V13';
-                btn.disabled = false;
-            }
-        }
-        window.startProtocol = startProtocol; // Exponer la función para el onclick del botón
-
-        /**
-         * Verifica si existe un documento de blindaje en estado PENDIENTE_PAGO o BLINDAJE_ACTIVO.
-         */
-        async function checkExistingBlindaje() {
-            if (OFFLINE_MODE || !db || !userId || userId.startsWith('demo-user')) {
-                 addLog("MODO OFFLINE DETECTADO. No se verificará en Firestore.", 'warning');
-                 return null;
-            }
-            
-            addLog("Verificando existencia de Blindaje Activo en Firestore...", 'info');
-
-            try {
-                const blindajeRef = path.getPrivateDocRef(BLINDAJE_COLLECTION, userId);
-                const docSnap = await getDoc(blindajeRef);
-
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    if (data.estado === PENDIENTE_PAGO || data.estado === BLINDAJE_ACTIVO) {
-                        addLog(`Blindaje ENCONTRADO. Estado: ${data.estado}.`, 'success');
-                        return { id: docSnap.id, ...data };
-                    }
-                }
-                addLog("No se encontró Blindaje activo o pendiente de pago.", 'info');
-            } catch (error) {
-                 addLog(`ERROR al verificar blindaje en Firestore: ${error.message}`, 'error');
-            }
-            return null;
-        }
-
-        /**
-         * Crea un nuevo registro de blindaje.
-         */
-        async function createNewBlindaje(isDemo = false) {
-            const btn = document.getElementById('exec-btn');
-            addLog(`Ejecutando Blindaje V13... [${isDemo ? 'OFFLINE/DEMO' : 'MODO REAL'}]`, 'info');
-
-            let newBlindaje = {
-                fechaCreacion: new Date().toISOString(),
-                estado: PENDIENTE_PAGO,
-                direccionDeposito: 'TBD',
-                userId: userId || 'demo-user',
-                isDemo: isDemo
-            };
-
-            let blindajeId = userId || crypto.randomUUID();
-            let depositAddress;
-            let userAddress = isDemo ? generateSimulatedAddress() : null;
-
-
-            if (!isDemo) {
-                // MODAL de entrada de dirección para el MODO REAL
-                userAddress = await showAddressInput();
-                if (!userAddress) {
-                    addLog("Operación cancelada. Dirección no proporcionada.", 'error');
-                    btn.textContent = 'EJECUTAR PROTOCOLO BLINDAJE V13';
-                    btn.disabled = false;
-                    return;
-                }
-            }
-
-            newBlindaje.direccionDeposito = userAddress;
-            depositAddress = userAddress;
-
-            if (!isDemo) {
-                addLog("Creando registro en Firestore...", 'info');
-                try {
-                    // Usamos el userId como docId para garantizar que solo haya un blindaje por usuario
-                    const blindajeRef = path.getPrivateDocRef(BLINDAJE_COLLECTION, userId); 
-                    await setDoc(blindajeRef, newBlindaje);
-                    addLog("REGISTRO DE BLINDAJE CREADO EXITOSAMENTE.", 'success');
-                } catch (error) {
-                    addLog(`ERROR al guardar en Firestore: ${error.message}`, 'error');
-                    btn.textContent = 'EJECUTAR PROTOCOLO BLINDAJE V13';
-                    btn.disabled = false;
-                    return;
-                }
-            } else {
-                 addLog("REGISTRO DE BLINDAJE CREADO exitosamente (Simulación).", 'success');
-            }
-            
-            // Mostrar mensaje al usuario para el depósito y espera la confirmación (Aceptar)
-            await showBlindajeDetails(blindajeId, newBlindaje.estado, depositAddress, isDemo);
-
-            if (!isDemo) {
-                // Iniciar escucha en Firestore para el Modo Real
-                listenForBlindajeConfirmation(blindajeId);
-                btn.textContent = 'ESPERANDO CONFIRMACIÓN...';
-                btn.disabled = true; // El botón queda deshabilitado mientras se espera el pago
-            } else {
-                // Modo Demo: reactivar botón para repetir la simulación
-                btn.textContent = 'EJECUTAR PROTOCOLO BLINDAJE V13';
-                btn.disabled = false;
-            }
-        }
-        
-        /**
-         * Solicita al usuario que ingrese la dirección de criptomoneda para el blindaje.
-         * ESTE MODAL ES ESPECIAL Y USA BOTONES CANCELAR/CONTINUAR.
-         */
-        function showAddressInput() {
-            return new Promise(resolve => {
-                const addressModal = document.getElementById('address-modal');
-                const input = document.getElementById('user-address-input');
-                const btnContinue = document.getElementById('address-modal-continue');
-                const btnCancel = document.getElementById('address-modal-cancel');
-                
-                // Resetear estado
-                input.value = '';
-                addressModal.style.display = 'flex';
-
-                const continueHandler = () => {
-                    const address = input.value.trim();
-                    if (address.length > 25) { // Simple validación de longitud para una dirección cripto
-                        addressModal.style.display = 'none';
-                        resolve(address);
-                        cleanup();
-                    } else {
-                        // En lugar de alert, mostramos un mensaje temporal
-                        input.style.borderColor = '#ff5555';
-                        setTimeout(() => input.style.borderColor = '#ffaa00', 1500);
-                        addLog("Error: La dirección ingresada parece ser inválida. Debe ser una dirección de depósito cripto (ej: USDT TRC-20).", 'error');
-                    }
-                };
-                
-                const cancelHandler = () => {
-                    addressModal.style.display = 'none';
-                    resolve(null);
-                    cleanup();
+                const blindajeData = {
+                    syncPointId: userId,
+                    blindajeAddress: address,
+                    timestamp: serverTimestamp(),
+                    protocolVersion: 'V13.0.1',
+                    status: 'T-01_ACTIVADO_PENDIENTE_CONFIRMACION',
+                    memo: 'Transacción de Blindaje Origen registrada por SYNC-POINT.'
                 };
 
-                const cleanup = () => {
-                    btnContinue.removeEventListener('click', continueHandler);
-                    btnCancel.removeEventListener('click', cancelHandler);
-                };
+                const docRef = await addDoc(blindajeCollection, blindajeData);
 
-                btnContinue.addEventListener('click', continueHandler);
-                btnCancel.addEventListener('click', cancelHandler);
-            });
-        }
-        
-        /**
-         * Reanuda un blindaje ya existente.
-         */
-        async function resumeBlindaje(doc) {
-            addLog(`Blindaje reanudado. Estado actual: ${doc.estado}.`, 'warning');
-            
-            await showBlindajeDetails(doc.id, doc.estado, doc.direccionDeposito, doc.isDemo);
+                // Éxito:
+                displayMessage(
+                    `BLINDAJE T-01 ACTIVADO. Se ha registrado su solicitud de blindaje. ` +
+                    `ID de Transacción del Núcleo: ${docRef.id}. Estado: ESPERA ACTIVA INICIADA.`,
+                    'status-success'
+                );
+                console.log(`Blindaje T-01 registrado. Document ID: ${docRef.id}`);
+                cryptoAddressInput.disabled = true;
 
-            if (!doc.isDemo) {
-                if (doc.estado === PENDIENTE_PAGO) {
-                    addLog("Continuando la escucha de confirmación de pago...", 'info');
-                    listenForBlindajeConfirmation(doc.id);
-                    document.getElementById('exec-btn').textContent = 'ESPERANDO CONFIRMACIÓN...';
-                    document.getElementById('exec-btn').disabled = true;
-                } else if (doc.estado === BLINDAJE_ACTIVO) {
-                    addLog("El Blindaje ya está ACTIVO. Monitoreando.", 'success');
-                    document.getElementById('exec-btn').textContent = 'BLINDAJE ACTIVO (Monitoreando)';
-                    document.getElementById('exec-btn').disabled = true;
-                    // Aquí se podría implementar la escucha para el estado BLINDAJE_ACTIVO si fuera necesario.
-                }
-            } else {
-                 document.getElementById('exec-btn').textContent = 'EJECUTAR PROTOCOLO BLINDAJE V13';
-                 document.getElementById('exec-btn').disabled = false;
+            } catch (e) {
+                // Fallo:
+                console.error("Error al registrar Blindaje T-01:", e);
+                displayMessage(`ERROR [T-01]: Fallo al registrar el Blindaje. ${e.message}. El Núcleo persiste.`, 'status-error');
+            } finally {
+                activateButton.disabled = false;
+                activateButton.textContent = 'ACTIVAR BLINDAJE T-01';
             }
-        }
+        };
 
-        /**
-         * Muestra los detalles del blindaje y espera la confirmación del usuario.
-         */
-        async function showBlindajeDetails(blindajeId, estado, direccion, isDemo) {
-            const modeText = isDemo ? '<span class="text-yellow-400 font-bold">MODO OFFLINE (DEMO)</span>' : '<span class="text-red-500 font-bold">BLINDAJE REAL V13</span>';
-            const statusColor = estado === PENDIENTE_PAGO ? 'text-yellow-400' : 'text-green-500';
-            const nextStepText = isDemo 
-                ? 'Presione **Aceptar** para completar la simulación.'
-                : 'Una vez realizado el depósito, presione **Aceptar** y el sistema entrará en estado de **ESPERA ACTIVA** de la transacción.';
-
-            const bodyContent = `
-                <p class="text-sm mb-3">ID de Referencia: <span class="font-mono text-xs">${blindajeId.substring(0, 12)}...</span></p>
-                <p class="text-sm mb-3">Estado: <span class="${statusColor}">${estado}</span></p>
-                <div class="bg-gray-800 p-3 rounded-lg border border-yellow-500 mb-4">
-                    <p class="text-xs text-yellow-300">DIRECCIÓN DE DEPÓSITO (USDT TRC-20):</p>
-                    <p class="text-base font-mono break-all">${direccion}</p>
-                </div>
-                <p class="text-white mb-4 text-sm">${nextStepText}</p>
-            `;
-
-            addLog(`MOSTRANDO DETALLES DE BLINDAJE: Dirección ${direccion}`, 'warning');
-            await showMessage(`PROTOCOLO V13: ${modeText}`, bodyContent, estado === PENDIENTE_PAGO ? 'warning' : 'success');
-            addLog("Usuario ha confirmado los detalles del Blindaje.", 'info');
-        }
-
-        /**
-         * Inicia la escucha en tiempo real del documento de blindaje en Firestore.
-         */
-        function listenForBlindajeConfirmation(blindajeId) {
-            if (OFFLINE_MODE || !db || !userId) return;
-
-            const blindajeRef = path.getPrivateDocRef(BLINDAJE_COLLECTION, userId);
-            const btn = document.getElementById('exec-btn');
-            
-            addLog("Iniciando escucha en tiempo real de Firestore...", 'info');
-
-            const unsubscribe = onSnapshot(blindajeRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    if (data.estado === BLINDAJE_ACTIVO) {
-                        addLog("BLINDAJE V13 ACTIVADO. Transacción de Blindaje confirmada.", 'success');
-                        btn.textContent = 'BLINDAJE ACTIVO';
-                        btn.disabled = true;
-                        unsubscribe(); // Detener la escucha una vez que se activa
-                    } else if (data.estado === PENDIENTE_PAGO) {
-                        addLog("Estado 'PENDIENTE_PAGO'. Esperando confirmación externa...", 'warning');
-                    }
-                } else {
-                    addLog("Advertencia: Documento de Blindaje desaparecido. Contacte al Operador.", 'error');
-                    unsubscribe();
-                }
-            }, (error) => {
-                addLog(`ERROR DE ESCUCHA DE FIREBASE: ${error.message}`, 'error');
-                unsubscribe();
-            });
-
-            // Opcional: Almacenar la función de cancelación para poder detenerla manualmente si fuera necesario
-            window.unsubscribeBlindaje = unsubscribe;
-        }
-
-
-        // Inicializar Firebase al cargar la página
-        window.onload = initializeFirebase;
+        // Asignar la función al objeto global window para que sea accesible desde el onclick en el HTML
+        window.handleBlindajeT01 = handleBlindajeT01;
     </script>
-</head>
-<body class="selection:bg-yellow-500 selection:text-black">
-    <div id="terminal-card">
-        <h1 class="protocol-title">
-            <span class="text-yellow-400">V13</span> PROTOCOLO BLINDAJE
-        </h1>
-
-        <div class="title-text text-sm mb-2 flex justify-between items-center">
-            <span>REGISTRO DE CONSOLA</span>
-            <span class="text-xs text-white">USER ID: <span id="user-id-display" class="font-mono text-green-400">Cargando...</span></span>
-        </div>
-        
-        <div id="terminal-log" class="terminal-log">
-            <!-- Los logs se inyectan aquí -->
-        </div>
-
-        <button id="exec-btn" class="btn-protocol" onclick="startProtocol()" disabled>
-            INICIALIZANDO SISTEMA...
-        </button>
-    </div>
-
-    <!-- Modal Genérico (Usado para mostrar detalles del Blindaje) -->
-    <div id="modal" class="hidden">
-        <div id="modal-content">
-            <h3 id="modal-title" class="text-xl font-bold mb-3 text-yellow-400">TÍTULO</h3>
-            <div id="modal-body" class="text-white mb-5 text-left">
-                <!-- Contenido dinámico (dirección, estado) -->
-            </div>
-            <button id="modal-accept" class="btn-protocol bg-[#00ff7f] hover:bg-[#50fa7b] w-full">Aceptar</button>
-        </div>
-    </div>
-    
-    <!-- Modal de Input de Dirección (Usado solo para el MODO REAL) -->
-    <div id="address-modal" class="hidden">
-        <div id="address-modal-content" class="bg-[#1b2b22] p-6 rounded-xl border border-[#ffaa00] shadow-2xl max-w-sm w-full text-center">
-            <h3 class="text-xl font-bold mb-4 text-[#ffaa00]">PROTOCOLO V13: Configuración Real</h3>
-            <p class="text-white mb-4 text-left text-sm">
-                Para activar el **Blindaje en Modo Real**, introduzca la dirección de la billetera de criptomoneda que usará para el depósito.
-            </p>
-            <input id="user-address-input" type="text" placeholder="Ej: TUSDTADDRESS20339K3PL65N2uWc"
-                class="w-full p-2 mb-4 bg-gray-700 text-white rounded-md border border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500"/>
-            <div class="flex justify-between space-x-3">
-                <button id="address-modal-cancel" class="bg-gray-600 text-white py-2 rounded-lg w-1/2 hover:bg-gray-700 transition">Cancelar</button>
-                <button id="address-modal-continue" class="bg-green-500 text-black py-2 rounded-lg w-1/2 font-bold hover:bg-green-400 transition">Continuar</button>
-            </div>
-        </div>
-    </div>
 </body>
 </html>
 
