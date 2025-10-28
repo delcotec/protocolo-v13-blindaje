@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Protocolo V13 | Solicitud de Blindaje</title>
+    <title>Protocolo V13 | Solicitud de Blindaje OFFLINE</title>
     <!-- Incluir Tailwind CSS (para estética) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Incluir Fuentes de Google -->
@@ -14,9 +14,10 @@
             --color-consola: #1e293b; /* Slate-800 */
             --color-texto-principal: #f8fafc; /* Slate-50 */
             --color-borde-consola: #334155; /* Slate-700 */
-            --color-comando: #60a5fa; /* Blue-400 */
+            --color-comando: #f59e0b; /* Amber-500 - Cambiado a Amber para Offline */
             --color-exito: #4ade80; /* Green-400 */
             --color-error: #f87171; /* Red-400 */
+            --color-advertencia: #fbbf24; /* Amber-400 */
         }
         body {
             font-family: 'Inter', sans-serif;
@@ -53,7 +54,8 @@
         .line-prompt { color: var(--color-comando); }
         .line-success { color: var(--color-exito); }
         .line-error { color: var(--color-error); }
-        
+        .line-warning { color: var(--color-advertencia); }
+
         /* Estilos para el botón EJECUTAR */
         #run-button {
             padding: 12px 25px;
@@ -111,7 +113,7 @@
             <div class="h-3 w-3 bg-red-500 rounded-full mr-2"></div>
             <div class="h-3 w-3 bg-yellow-500 rounded-full mr-2"></div>
             <div class="h-3 w-3 bg-green-500 rounded-full"></div>
-            <span class="ml-auto text-xs text-gray-400 font-semibold">Protocolo V13.exe - NÚCLEO ACTIVO</span>
+            <span class="ml-auto text-xs text-gray-400 font-semibold">Protocolo V13.exe - MODO OFFLINE/DEMO</span>
         </div>
         <div id="output"></div>
         <div class="p-4 border-t border-gray-700 flex justify-center">
@@ -127,24 +129,10 @@
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // --- VARIABLES GLOBALES DEL ENTORNO (NO MODIFICAR) ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        let db;
-        let auth;
-        let userId = 'anonimo'; // Valor temporal antes de la autenticación
-        let isFirebaseReady = false;
-
+    <script>
         // --- CONFIGURACIÓN DE CRIPTOMONEDA ---
         // DEBE REEMPLAZAR ESTE VALOR CON LA DIRECCIÓN REAL DE LA WALLET
-        const DIRECCION_CRIPTOMONEDA = "TU_DIRECCION_DE_USDT_O_BTC_AQUI"; 
+        let DIRECCION_CRIPTOMONEDA = "TU_DIRECCION_DE_USDT_O_BTC_AQUI"; 
         
         // --- UTILIDADES DE UI Y LOGGING ---
 
@@ -178,6 +166,9 @@
                 case 'error':
                     span.className = 'line-error';
                     break;
+                case 'warning':
+                    span.className = 'line-warning';
+                    break;
                 default:
                     span.style.color = 'var(--color-texto-principal)';
             }
@@ -186,168 +177,68 @@
             output.scrollTop = output.scrollHeight;
         }
 
-        // --- FUNCIONES DE TTS (MANTENIDAS POR SI SE REQUIEREN MÁS ADELANTE) ---
-        // Estas funciones están aquí por si se activa alguna función de voz, 
-        // aunque el TTS ya no se usa directamente en este flujo.
-
-        function base64ToArrayBuffer(base64) {
-            const binaryString = atob(base64);
-            const len = binaryString.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-            return bytes.buffer;
+        // --- INICIALIZACIÓN MODO OFFLINE ---
+        function initializeOfflineMode() {
+            log("Iniciando NÚCLEO del Protocolo V13...", 'default');
+            log("MODO DE FALLO DETECTADO: NO se pudo conectar a Firebase.", 'warning');
+            log("Activando 'Protocolo de Contingencia (Modo Offline/Demo)'...", 'warning');
+            log("SISTEMA ACTIVO. Listo para Ejecutar Protocolo.", 'success');
+            runButton.disabled = false;
         }
 
-        function pcmToWav(pcmData, sampleRate) {
-            const pcm16 = pcmData; // Asumimos Int16Array
-            const numChannels = 1;
-            const bytesPerSample = 2; // Int16Array (16-bit PCM)
-
-            const buffer = new ArrayBuffer(44 + pcm16.length * bytesPerSample);
-            const view = new DataView(buffer);
-
-            // Escribir el encabezado WAV
-            // RIFF chunk descriptor
-            writeString(view, 0, 'RIFF');
-            view.setUint32(4, 36 + pcm16.length * bytesPerSample, true);
-            writeString(view, 8, 'WAVE');
-            // FMT sub-chunk
-            writeString(view, 12, 'fmt ');
-            view.setUint32(16, 16, true);
-            view.setUint16(20, 1, true); // PCM = 1
-            view.setUint16(22, numChannels, true);
-            view.setUint32(24, sampleRate, true);
-            view.setUint32(28, sampleRate * numChannels * bytesPerSample, true);
-            view.setUint16(32, numChannels * bytesPerSample, true);
-            view.setUint16(34, bytesPerSample * 8, true); // Bits per sample
-            // Data sub-chunk
-            writeString(view, 36, 'data');
-            view.setUint32(40, pcm16.length * bytesPerSample, true);
-
-            // Escribir los datos PCM
-            let offset = 44;
-            for (let i = 0; i < pcm16.length; i++) {
-                view.setInt16(offset, pcm16[i], true);
-                offset += 2;
-            }
-
-            return new Blob([view], { type: 'audio/wav' });
-        }
-
-        function writeString(view, offset, string) {
-            for (let i = 0; i < string.length; i++) {
-                view.setUint8(offset + i, string.charCodeAt(i));
-            }
-        }
-
-        // --- INICIALIZACIÓN DE FIREBASE ---
-        async function initializeFirebase() {
-            if (!firebaseConfig) {
-                log("ERROR: Configuración de Firebase no disponible.", 'error');
-                return;
-            }
-            try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                // Autenticación: Usar token si está disponible, sino anónimo
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                    log("Autenticación exitosa con token personalizado.", 'success');
-                } else {
-                    await signInAnonymously(auth);
-                    log("Autenticación anónima exitosa.", 'success');
-                }
-
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        log(`[ID Usuario]: ${userId}`, 'prompt');
-                        isFirebaseReady = true;
-                        runButton.disabled = false;
-                        log("SISTEMA ACTIVO. Listo para Ejecutar Protocolo.", 'success');
-                    } else {
-                        log("Esperando autenticación de usuario...", 'error');
-                    }
-                });
-
-                // Inicializar log de consola
-                log("Iniciando NÚCLEO del Protocolo V13...", 'default');
-                log("Conectando con Servidores FIREBASE...", 'default');
-
-            } catch (error) {
-                log(`ERROR FATAL en Firebase: ${error.message}`, 'error');
-            }
-        }
-
-        // --- FUNCIÓN PRINCIPAL DE BLINDAJE ---
+        // --- FUNCIÓN PRINCIPAL DE BLINDAJE (MODO OFFLINE) ---
         window.iniciarBlindaje = async function() {
-            if (!isFirebaseReady) {
-                showMessage("ERROR: El sistema no está listo. Espere la conexión con Firebase.", true);
-                return;
-            }
-
-            if (DIRECCION_CRIPTOMONEDA === "TU_DIRECCION_DE_USDT_O_BTC_AQUI") {
-                showMessage("ERROR: La dirección de criptomoneda no ha sido configurada. Contacte al administrador.", true);
-                return;
-            }
-
             runButton.disabled = true;
-            log("--- EJECUTANDO PROTOCOLO BLINDAJE V13 ---", 'prompt');
+            log("--- EJECUTANDO PROTOCOLO BLINDAJE V13 (OFFLINE) ---", 'prompt');
 
             try {
-                const docRef = doc(db, "artifacts", appId, "users", userId, "blindaje_v13", "solicitud");
-
-                // 1. Obtener datos (chequear si ya existe una solicitud)
-                log("Verificando estado de solicitud anterior...", 'default');
-                const docSnap = await getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    // Si ya existe, mostrar el estado actual
-                    const data = docSnap.data();
-                    log(`SOLICITUD ENCONTRADA. Estado actual: ${data.estado}`, 'prompt');
-                    log(`Dirección de Depósito: ${data.direccionCrypto}`, 'default');
-                    showMessage(`Su Protocolo V13 ya fue iniciado. Estado: ${data.estado}. Presione Aceptar para ver la consola.`, false);
-                } else {
-                    // 2. Crear nueva solicitud
-                    log("No se encontró solicitud. Creando nuevo registro...", 'default');
-
-                    const nuevaSolicitud = {
-                        userId: userId,
-                        estado: "PENDIENTE_PAGO",
-                        fechaCreacion: serverTimestamp(),
-                        direccionCrypto: DIRECCION_CRIPTOMONEDA,
-                        tipoBlindaje: "V13",
-                        montoMinimo: 50.00 // Ejemplo de monto
-                    };
-
-                    await setDoc(docRef, nuevaSolicitud);
-
-                    log("REGISTRO CREADO exitosamente en Firestore.", 'success');
-                    log("Estado: PENDIENTE_PAGO", 'prompt');
-                    log(`DIRECCIÓN DE DEPÓSITO GENERADA: ${DIRECCION_CRIPTOMONEDA}`, 'prompt');
-                    log("Instrucción: Por favor, deposite el monto acordado a esta dirección para activar el blindaje.", 'default');
-
-                    showMessage(
-                        `SOLICITUD V13 CREADA. Estado: PENDIENTE DE PAGO. Dirección de Depósito: ${DIRECCION_CRIPTOMONEDA}.`, 
-                        false
-                    );
+                if (DIRECCION_CRIPTOMONEDA === "TU_DIRECCION_DE_USDT_O_BTC_AQUI") {
+                    log("ERROR: La dirección de criptomoneda no ha sido configurada. Solicitando valor...", 'error');
+                    
+                    // Simulamos la entrada de la dirección
+                    const tempDir = prompt("Introduzca su dirección de billetera (USDT o BTC) AHORA:");
+                    
+                    if (tempDir && tempDir.length > 10) {
+                        DIRECCION_CRIPTOMONEDA = tempDir.trim();
+                        log(`Dirección Recibida: ${DIRECCION_CRIPTOMONEDA.substring(0, 10)}...`, 'success');
+                        log("Reintentando Blindaje...", 'default');
+                        await new Promise(resolve => setTimeout(resolve, 500)); // Pequeña espera
+                        window.iniciarBlindaje(); // Llama a la función de nuevo con la dirección configurada
+                        return;
+                    } else {
+                        log("Cancelado. Debe introducir una dirección válida.", 'error');
+                        showMessage("Cancelado. Debe introducir una dirección de billetera válida para continuar.", true);
+                        runButton.disabled = false;
+                        return;
+                    }
                 }
+
+                // 2. Simular Creación de solicitud
+                log("Simulando creación de nuevo registro (Modo Demo)...", 'default');
+                await new Promise(resolve => setTimeout(resolve, 1500)); 
+
+                log("REGISTRO DE BLINDAJE CREADO exitosamente (Simulación).", 'success');
+                log("Estado: PENDIENTE_PAGO", 'prompt');
+                log(`DIRECCIÓN DE DEPÓSITO GENERADA: ${DIRECCION_CRIPTOMONEDA}`, 'prompt');
+                log("Instrucción: Deposite el monto a esta dirección para activar el blindaje (Modo Demo).", 'default');
+
+                showMessage(
+                    `SOLICITUD V13 CREADA EN MODO OFFLINE. Estado: PENDIENTE DE PAGO. Dirección de Depósito: ${DIRECCION_CRIPTOMONEDA}.`, 
+                    false
+                );
 
             } catch (error) {
                 log(`ERROR al procesar solicitud: ${error.message}`, 'error');
-                showMessage(`ERROR en la base de datos: ${error.message}`, true);
+                showMessage(`ERROR: Ocurrió un fallo en la simulación.`, true);
             } finally {
                 runButton.disabled = false;
             }
         };
 
-        // Iniciar la conexión de Firebase al cargar la página
-        window.onload = initializeFirebase;
+        // Iniciar el modo offline al cargar la página
+        window.onload = initializeOfflineMode;
     </script>
 </body>
 </html>
+
 
