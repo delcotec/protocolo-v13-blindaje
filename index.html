@@ -82,7 +82,7 @@
             margin-bottom: 30px;
         }
 
-        /* Modal Styles */
+        /* Modal Styles - Genérico */
         #modal {
             position: fixed;
             top: 0;
@@ -104,6 +104,20 @@
             max-width: 400px;
             width: 90%;
             text-align: center;
+        }
+
+        /* Modal Styles - Input de Dirección */
+        #address-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000; /* Mayor que el modal genérico */
         }
     </style>
      <!-- Firebase SDK -->
@@ -352,7 +366,8 @@
             if (!isDemo) {
                 addLog("Creando registro en Firestore...", 'info');
                 try {
-                    const blindajeRef = path.getPrivateDocRef(BLINDAJE_COLLECTION, blindajeId);
+                    // Usamos el userId como docId para garantizar que solo haya un blindaje por usuario
+                    const blindajeRef = path.getPrivateDocRef(BLINDAJE_COLLECTION, userId); 
                     await setDoc(blindajeRef, newBlindaje);
                     addLog("REGISTRO DE BLINDAJE CREADO EXITOSAMENTE.", 'success');
                 } catch (error) {
@@ -386,209 +401,185 @@
          */
         function showAddressInput() {
             return new Promise(resolve => {
-                // Usamos un modal especial para la entrada de datos para evitar conflictos con el showMessage genérico
-                const modalWrapper = document.getElementById('modal-wrapper') || document.createElement('div');
-                modalWrapper.id = 'modal-wrapper';
-                document.body.appendChild(modalWrapper);
-                modalWrapper.innerHTML = `
-                    <div id="address-modal" class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-80 flex justify-center items-center z-20">
-                        <div id="address-modal-content" class="bg-[#1b2b22] p-6 rounded-xl border border-[#ffaa00] shadow-2xl max-w-sm w-full text-center">
-                            <h3 class="text-xl font-bold mb-4 text-[#ffaa00]">PROTOCOLO V13: Configuración Real</h3>
-                            <p class="text-white mb-4 text-left text-sm">
-                                Para activar el **Blindaje en Modo Real**, introduzca la dirección de la billetera de criptomoneda que usará para el depósito.
-                            </p>
-                            <input id="user-address-input" type="text" placeholder="Ej: TUQY4zSyA6B87c8D9E0FGfH2H34JSK6"
-                                class="w-full p-2 mb-4 bg-gray-700 text-white rounded-md border border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500" />
-                            <div class="flex justify-end space-x-3">
-                                <button id="modal-cancel-addr" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md font-semibold transition">Cancelar</button>
-                                <button id="modal-submit-addr" class="bg-yellow-600 hover:bg-yellow-500 text-black py-2 px-4 rounded-md font-semibold transition">Continuar</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                const addressModal = document.getElementById('address-modal');
+                const input = document.getElementById('user-address-input');
+                const btnContinue = document.getElementById('address-modal-continue');
+                const btnCancel = document.getElementById('address-modal-cancel');
+                
+                // Resetear estado
+                input.value = '';
+                addressModal.style.display = 'flex';
 
-                const modalElement = document.getElementById('address-modal');
-                const cancelButton = document.getElementById('modal-cancel-addr');
-                const submitButton = document.getElementById('modal-submit-addr');
-                const inputElement = document.getElementById('user-address-input');
+                const continueHandler = () => {
+                    const address = input.value.trim();
+                    if (address.length > 25) { // Simple validación de longitud para una dirección cripto
+                        addressModal.style.display = 'none';
+                        resolve(address);
+                        cleanup();
+                    } else {
+                        // En lugar de alert, mostramos un mensaje temporal
+                        input.style.borderColor = '#ff5555';
+                        setTimeout(() => input.style.borderColor = '#ffaa00', 1500);
+                        addLog("Error: La dirección ingresada parece ser inválida. Debe ser una dirección de depósito cripto (ej: USDT TRC-20).", 'error');
+                    }
+                };
+                
+                const cancelHandler = () => {
+                    addressModal.style.display = 'none';
+                    resolve(null);
+                    cleanup();
+                };
 
                 const cleanup = () => {
-                    modalWrapper.remove();
+                    btnContinue.removeEventListener('click', continueHandler);
+                    btnCancel.removeEventListener('click', cancelHandler);
                 };
 
-                const handleCancel = () => {
-                    cleanup();
-                    resolve(null); 
-                };
-
-                const handleSubmit = () => {
-                    const address = inputElement.value.trim();
-                    // Validación simple de longitud y caracteres
-                    if (address.length > 20 && /^[a-zA-Z0-9]+$/.test(address)) {
-                        cleanup();
-                        resolve(address);
-                    } else {
-                        // Alerta de error usando el showMessage estándar
-                        showMessage('Error de Dirección', 'Por favor, introduzca una dirección de criptomoneda válida y completa.', 'error')
-                            .then(() => {
-                                // Mantenemos el modal de entrada visible
-                            });
-                    }
-                };
-
-                cancelButton.addEventListener('click', handleCancel);
-                submitButton.addEventListener('click', handleSubmit);
-                inputElement.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        handleSubmit();
-                    }
-                });
+                btnContinue.addEventListener('click', continueHandler);
+                btnCancel.addEventListener('click', cancelHandler);
             });
         }
-
-
+        
         /**
-         * Reanuda el protocolo basándose en un registro existente.
+         * Reanuda un blindaje ya existente.
          */
-        async function resumeBlindaje(docData) {
-            const btn = document.getElementById('exec-btn');
-            addLog(`REANUDANDO Blindaje V13... Estado: ${docData.estado}`, 'warning');
+        async function resumeBlindaje(doc) {
+            addLog(`Blindaje reanudado. Estado actual: ${doc.estado}.`, 'warning');
             
-            if (docData.estado === PENDIENTE_PAGO) {
-                // Si está pendiente de pago, mostrar los detalles y seguir escuchando
-                await showBlindajeDetails(docData.id, docData.estado, docData.direccionDeposito, docData.isDemo);
-                if (!docData.isDemo) {
-                    listenForBlindajeConfirmation(docData.id);
-                    btn.textContent = 'ESPERANDO CONFIRMACIÓN...';
-                    btn.disabled = true;
-                } else {
-                    // Modo Demo al reanudar
-                    btn.textContent = 'EJECUTAR PROTOCOLO BLINDAJE V13';
-                    btn.disabled = false;
+            await showBlindajeDetails(doc.id, doc.estado, doc.direccionDeposito, doc.isDemo);
+
+            if (!doc.isDemo) {
+                if (doc.estado === PENDIENTE_PAGO) {
+                    addLog("Continuando la escucha de confirmación de pago...", 'info');
+                    listenForBlindajeConfirmation(doc.id);
+                    document.getElementById('exec-btn').textContent = 'ESPERANDO CONFIRMACIÓN...';
+                    document.getElementById('exec-btn').disabled = true;
+                } else if (doc.estado === BLINDAJE_ACTIVO) {
+                    addLog("El Blindaje ya está ACTIVO. Monitoreando.", 'success');
+                    document.getElementById('exec-btn').textContent = 'BLINDAJE ACTIVO (Monitoreando)';
+                    document.getElementById('exec-btn').disabled = true;
+                    // Aquí se podría implementar la escucha para el estado BLINDAJE_ACTIVO si fuera necesario.
                 }
-            } else if (docData.estado === BLINDAJE_ACTIVO) {
-                // Si ya está activo, mostrar mensaje y el botón de Aterrizaje
-                addLog("Blindaje V13 se encuentra en estado ACTIVO. Listo para ATERRIZAJE (DCA).", 'success');
-                
-                // Cambiar estilo y texto del botón para la siguiente fase (DCA)
-                btn.classList.remove('btn-protocol');
-                btn.classList.add('bg-green-600', 'hover:bg-green-500', 'text-white', 'py-3', 'px-6', 'rounded-md', 'font-bold', 'transition');
-                btn.textContent = 'INICIAR DISTRIBUCIÓN DCA (ATERRIZAJE)';
-                
-                // Asignar acción para el Aterrizaje
-                btn.onclick = () => showMessage(
-                    'Blindaje ACTIVO', 
-                    'El Blindaje está ACTIVO. Ahora debe cargar el código del **SISTEMA DE ATERRIZAJE V13 (DCA)** en el archivo `index.html` para continuar la distribución del capital.', 
-                    'success'
-                );
-                
-                btn.disabled = false;
+            } else {
+                 document.getElementById('exec-btn').textContent = 'EJECUTAR PROTOCOLO BLINDAJE V13';
+                 document.getElementById('exec-btn').disabled = false;
             }
         }
 
         /**
-         * Muestra los detalles del blindaje (dirección y estado) al usuario en un modal.
-         * ESTE MODAL ES SIMPLE Y SOLO TIENE UN BOTÓN ACEPTAR.
+         * Muestra los detalles del blindaje y espera la confirmación del usuario.
          */
-        async function showBlindajeDetails(id, estado, direccion, isDemo) {
-            
-            const messageTitle = isDemo ? 'SOLICITUD V13 CREADA EN MODO OFFLINE' : 'PROTOCOLO V13: PENDIENTE DE PAGO';
-            const messageBody = `
-                <p class="text-white mb-2 font-semibold">Estado: <span class="text-yellow-500">${estado}</span></p>
-                <p class="text-white mb-4 font-semibold">Dirección de Depósito:</p>
-                <div class="bg-gray-800 p-3 rounded-md break-all text-sm font-mono text-yellow-400 select-all cursor-text">
-                    ${direccion}
+        async function showBlindajeDetails(blindajeId, estado, direccion, isDemo) {
+            const modeText = isDemo ? '<span class="text-yellow-400 font-bold">MODO OFFLINE (DEMO)</span>' : '<span class="text-red-500 font-bold">BLINDAJE REAL V13</span>';
+            const statusColor = estado === PENDIENTE_PAGO ? 'text-yellow-400' : 'text-green-500';
+            const nextStepText = isDemo 
+                ? 'Presione **Aceptar** para completar la simulación.'
+                : 'Una vez realizado el depósito, presione **Aceptar** y el sistema entrará en estado de **ESPERA ACTIVA** de la transacción.';
+
+            const bodyContent = `
+                <p class="text-sm mb-3">ID de Referencia: <span class="font-mono text-xs">${blindajeId.substring(0, 12)}...</span></p>
+                <p class="text-sm mb-3">Estado: <span class="${statusColor}">${estado}</span></p>
+                <div class="bg-gray-800 p-3 rounded-lg border border-yellow-500 mb-4">
+                    <p class="text-xs text-yellow-300">DIRECCIÓN DE DEPÓSITO (USDT TRC-20):</p>
+                    <p class="text-base font-mono break-all">${direccion}</p>
                 </div>
-                ${isDemo ? 
-                    '<p class="mt-4 text-gray-400 text-sm">Instrucción (DEMO): Deposite el monto a esta dirección (simulada). Al presionar Aceptar, el botón se reactivará para una nueva simulación.</p>' :
-                    '<p class="mt-4 text-white font-semibold">Instrucción: Deposite el capital de Blindaje a la dirección indicada. El sistema ha entrado en modo de ESPERA ACTIVA en Firestore. Presione Aceptar para continuar.</p>'
-                }
+                <p class="text-white mb-4 text-sm">${nextStepText}</p>
             `;
-            // showMessage devuelve una promesa que se resuelve cuando se presiona Aceptar
-            await showMessage(messageTitle, messageBody, isDemo ? 'warning' : 'info');
+
+            addLog(`MOSTRANDO DETALLES DE BLINDAJE: Dirección ${direccion}`, 'warning');
+            await showMessage(`PROTOCOLO V13: ${modeText}`, bodyContent, estado === PENDIENTE_PAGO ? 'warning' : 'success');
+            addLog("Usuario ha confirmado los detalles del Blindaje.", 'info');
         }
 
-
         /**
-         * Escucha los cambios en el documento de blindaje en Firestore.
+         * Inicia la escucha en tiempo real del documento de blindaje en Firestore.
          */
         function listenForBlindajeConfirmation(blindajeId) {
-            if (OFFLINE_MODE || !db || !userId || userId.startsWith('demo-user')) {
-                return; // Solo para Modo Real
-            }
+            if (OFFLINE_MODE || !db || !userId) return;
 
-            const blindajeRef = path.getPrivateDocRef(BLINDAJE_COLLECTION, blindajeId);
-            addLog("Iniciando escucha en tiempo real para confirmación de depósito...", 'info');
+            const blindajeRef = path.getPrivateDocRef(BLINDAJE_COLLECTION, userId);
+            const btn = document.getElementById('exec-btn');
             
-            // Usar onSnapshot para escuchar en tiempo real
-            onSnapshot(blindajeRef, (docSnap) => {
+            addLog("Iniciando escucha en tiempo real de Firestore...", 'info');
+
+            const unsubscribe = onSnapshot(blindajeRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     if (data.estado === BLINDAJE_ACTIVO) {
-                        // Importante: Detener la escucha una vez que se activa
-                        // En Firestore, el listener se detiene cuando el observador (onSnapshot) es desconectado.
-                        
-                        addLog("¡DEPÓSITO CONFIRMADO! Blindaje V13 ACTIVADO.", 'success');
-                        // Mostrar mensaje de éxito y cambiar a la fase DCA
-                        showMessage('Blindaje Activado', 'El Blindaje V13 ha sido confirmado y está ACTIVO. Ahora puede proceder a la fase de Aterrizaje (DCA).', 'success')
-                            .then(() => resumeBlindaje(data)); // Reanudar para cambiar el botón
-                            
-                        // Si se quiere detener explicitamente la escucha, se necesita la función de desuscripción.
-                        // Para este caso de uso simple, el listener puede vivir, o se puede reestructurar para almacenar la función de desuscripción.
-                        // Dejamos que el onSnapshot siga vivo, y la llamada a resumeBlindaje actualizará la UI.
+                        addLog("BLINDAJE V13 ACTIVADO. Transacción de Blindaje confirmada.", 'success');
+                        btn.textContent = 'BLINDAJE ACTIVO';
+                        btn.disabled = true;
+                        unsubscribe(); // Detener la escucha una vez que se activa
                     } else if (data.estado === PENDIENTE_PAGO) {
-                        addLog("Esperando confirmación de depósito...", 'info');
+                        addLog("Estado 'PENDIENTE_PAGO'. Esperando confirmación externa...", 'warning');
                     }
                 } else {
-                    addLog("El registro de Blindaje ya no existe.", 'error');
+                    addLog("Advertencia: Documento de Blindaje desaparecido. Contacte al Operador.", 'error');
+                    unsubscribe();
                 }
             }, (error) => {
-                addLog(`ERROR EN ESCUCHA DE BLINDAJE: ${error.message}`, 'error');
+                addLog(`ERROR DE ESCUCHA DE FIREBASE: ${error.message}`, 'error');
+                unsubscribe();
             });
+
+            // Opcional: Almacenar la función de cancelación para poder detenerla manualmente si fuera necesario
+            window.unsubscribeBlindaje = unsubscribe;
         }
 
 
+        // Inicializar Firebase al cargar la página
         window.onload = initializeFirebase;
     </script>
 </head>
-<body>
+<body class="selection:bg-yellow-500 selection:text-black">
     <div id="terminal-card">
-        <div class="protocol-title">
-            PROTOCOLO V13: BLINDAJE
+        <h1 class="protocol-title">
+            <span class="text-yellow-400">V13</span> PROTOCOLO BLINDAJE
+        </h1>
+
+        <div class="title-text text-sm mb-2 flex justify-between items-center">
+            <span>REGISTRO DE CONSOLA</span>
+            <span class="text-xs text-white">USER ID: <span id="user-id-display" class="font-mono text-green-400">Cargando...</span></span>
         </div>
         
-        <div class="terminal-log" id="terminal-log">
-            <div class="log-line info">...</div>
+        <div id="terminal-log" class="terminal-log">
+            <!-- Los logs se inyectan aquí -->
         </div>
-        
-        <button id="exec-btn" class="btn-protocol" onclick="startProtocol()">
-            EJECUTAR PROTOCOLO BLINDAJE V13
+
+        <button id="exec-btn" class="btn-protocol" onclick="startProtocol()" disabled>
+            INICIALIZANDO SISTEMA...
         </button>
-        <p class="text-center text-xs text-gray-500 mt-4">ID de Usuario: <span id="user-id-display">Cargando...</span></p>
     </div>
 
-    <!-- Modal para mensajes simples (usado por showMessage) -->
-    <div id="modal">
-        <div id="modal-content" class="rounded-lg">
-            <h3 id="modal-title" class="text-xl font-bold mb-3 text-yellow-400">Título</h3>
-            <div id="modal-body" class="text-gray-300 mb-5">Cuerpo del mensaje.</div>
-            <button id="modal-accept" class="bg-yellow-600 hover:bg-yellow-500 text-black py-2 px-4 rounded-md font-semibold transition">Aceptar</button>
+    <!-- Modal Genérico (Usado para mostrar detalles del Blindaje) -->
+    <div id="modal" class="hidden">
+        <div id="modal-content">
+            <h3 id="modal-title" class="text-xl font-bold mb-3 text-yellow-400">TÍTULO</h3>
+            <div id="modal-body" class="text-white mb-5 text-left">
+                <!-- Contenido dinámico (dirección, estado) -->
+            </div>
+            <button id="modal-accept" class="btn-protocol bg-[#00ff7f] hover:bg-[#50fa7b] w-full">Aceptar</button>
         </div>
     </div>
-
-    <script>
-        // Inicializa el display del ID de la aplicación antes de la autenticación de Firebase
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('user-id-display').textContent = 'App ID: ' + window.appId;
-            // Asegurarse de que el botón se habilite al cargar por primera vez
-            if (!window.isFirebaseReady) {
-                document.getElementById('exec-btn').disabled = false;
-                document.getElementById('exec-btn').textContent = 'EJECUTAR PROTOCOLO BLINDAJE V13';
-            }
-        });
-    </script>
+    
+    <!-- Modal de Input de Dirección (Usado solo para el MODO REAL) -->
+    <div id="address-modal" class="hidden">
+        <div id="address-modal-content" class="bg-[#1b2b22] p-6 rounded-xl border border-[#ffaa00] shadow-2xl max-w-sm w-full text-center">
+            <h3 class="text-xl font-bold mb-4 text-[#ffaa00]">PROTOCOLO V13: Configuración Real</h3>
+            <p class="text-white mb-4 text-left text-sm">
+                Para activar el **Blindaje en Modo Real**, introduzca la dirección de la billetera de criptomoneda que usará para el depósito.
+            </p>
+            <input id="user-address-input" type="text" placeholder="Ej: TUSDTADDRESS20339K3PL65N2uWc"
+                class="w-full p-2 mb-4 bg-gray-700 text-white rounded-md border border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500"/>
+            <div class="flex justify-between space-x-3">
+                <button id="address-modal-cancel" class="bg-gray-600 text-white py-2 rounded-lg w-1/2 hover:bg-gray-700 transition">Cancelar</button>
+                <button id="address-modal-continue" class="bg-green-500 text-black py-2 rounded-lg w-1/2 font-bold hover:bg-green-400 transition">Continuar</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
+
 
 
 
