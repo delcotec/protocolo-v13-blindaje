@@ -156,7 +156,7 @@
                 const modal = document.getElementById('modal');
                 const modalTitle = document.getElementById('modal-title');
                 const modalBody = document.getElementById('modal-body');
-                const acceptButton = document.getElementById('modal-accept');
+                let acceptButton = document.getElementById('modal-accept'); // Usar let
                 const modalContent = document.getElementById('modal-content');
 
                 modalTitle.textContent = title;
@@ -165,21 +165,19 @@
                 // Establecer color de borde basado en el tipo
                 modalContent.style.borderColor = type === 'error' ? '#ff5555' : (type === 'success' ? '#00ff7f' : '#ffaa00');
                 
-                // Asegurarse de que el botón de aceptar sea visible
-                acceptButton.style.display = 'block'; 
-
-                // Clonar el botón para eliminar cualquier event listener anterior
+                // CRITICAL FIX: Clonar el botón para eliminar cualquier event listener anterior
+                // Esta es la solución definitiva al problema del botón atascado
                 const newButton = acceptButton.cloneNode(true);
                 acceptButton.parentNode.replaceChild(newButton, acceptButton);
-                newButton.id = 'modal-accept'; // Restaurar el ID
+                acceptButton = newButton; // Reasignar la referencia al nuevo botón
 
                 const handler = () => {
                     modal.style.display = 'none';
-                    newButton.removeEventListener('click', handler);
+                    acceptButton.removeEventListener('click', handler);
                     resolve();
                 };
 
-                newButton.addEventListener('click', handler);
+                acceptButton.addEventListener('click', handler);
                 modal.style.display = 'flex';
             });
         }
@@ -204,7 +202,7 @@
                             userIdDisplay.textContent = userId;
                             addLog(`CONEXIÓN FIREBASE ESTABLECIDA. UID: ${userId.substring(0, 8)}...`, 'success');
                             isFirebaseReady = true;
-                            await startProtocol(); 
+                            await startProtocol(false); // Iniciar de inmediato
                         } else {
                             try {
                                 if (initialAuthToken) {
@@ -217,7 +215,7 @@
                             } catch (error) {
                                 addLog(`ERROR DE AUTENTICACIÓN: ${error.message}`, 'error');
                                 isFirebaseReady = true; 
-                                await startProtocol();
+                                await startProtocol(false); // Iniciar aunque falle la auth
                             }
                         }
                     });
@@ -225,15 +223,15 @@
                 } catch (error) {
                     addLog(`ERROR: Fallo al inicializar Firebase: ${error.message}`, 'error');
                     isFirebaseReady = true; 
-                    await startProtocol();
+                    await startProtocol(false); // Iniciar aunque falle la inicialización
                 }
             } else {
                 addLog("ADVERTENCIA: Configuración de Firebase no disponible. Ejecutando en MODO OFFLINE/DEMO.", 'warning');
                 userId = 'demo-user-' + appId; 
                 userIdDisplay.textContent = userId;
                 isFirebaseReady = true;
-                document.getElementById('exec-btn').disabled = false;
-                await startProtocol();
+                // En modo demo, el botón se habilita al final de startProtocol o al cargar la página
+                await startProtocol(true);
             }
         }
         window.initializeFirebase = initializeFirebase;
@@ -246,19 +244,23 @@
         const OFFLINE_MODE = !firebaseConfig;
         
         // Simulación de generación de dirección (para modo offline)
-        const generateSimulatedAddress = () => "THJ65N2uWc9XY7e7uH9K3P4H8RG2T9V";
+        const generateSimulatedAddress = () => "TX9F2P4H8RG2T9V7e7uH9K3PL65N2uWc";
 
         /**
          * Función principal para iniciar o reanudar el protocolo V13.
+         * El parámetro forceDemo se usa solo si initializeFirebase lo detecta.
          */
-        async function startProtocol() {
+        async function startProtocol(forceDemo = false) {
             const btn = document.getElementById('exec-btn');
 
             if (!isFirebaseReady) {
-                await showMessage('Sistema Ocupado', 'El sistema está cargando la conexión. Por favor, espere.', 'error');
+                // Si aún no está listo, solo habilitamos el botón para que el usuario pueda interactuar después de la carga
+                btn.textContent = 'EJECUTAR PROTOCOLO BLINDAJE V13';
+                btn.disabled = false;
                 return;
             }
 
+            // Deshabilitamos temporalmente el botón para evitar doble clic
             btn.disabled = true;
             btn.textContent = 'EJECUTANDO...';
 
@@ -266,16 +268,14 @@
 
             try {
                 let blindajeDoc = await checkExistingBlindaje();
+                const isDemo = forceDemo || OFFLINE_MODE;
 
                 if (blindajeDoc) {
                     await resumeBlindaje(blindajeDoc);
-                } else if (!OFFLINE_MODE) {
-                    await createNewBlindaje();
+                } else if (!isDemo) {
+                    await createNewBlindaje(false); // Modo Real
                 } else {
-                    // Modo Offline (Demo) - Aquí se maneja la reactivación del botón después del modal.
-                    await createNewBlindaje(true);
-                    btn.textContent = 'EJECUTAR PROTOCOLO BLINDAJE V13';
-                    btn.disabled = false;
+                    await createNewBlindaje(true); // Modo Offline (Demo)
                 }
 
             } catch (error) {
@@ -284,6 +284,7 @@
                 btn.disabled = false;
             }
         }
+        window.startProtocol = startProtocol; // Exponer la función para el onclick del botón
 
         /**
          * Verifica si existe un documento de blindaje en estado PENDIENTE_PAGO o BLINDAJE_ACTIVO.
@@ -293,7 +294,7 @@
                  addLog("MODO OFFLINE DETECTADO. No se verificará en Firestore.", 'warning');
                  return null;
             }
-            // ... (Lógica de verificación de Firestore) ...
+            
             addLog("Verificando existencia de Blindaje Activo en Firestore...", 'info');
 
             try {
@@ -331,18 +332,24 @@
 
             let blindajeId = userId || crypto.randomUUID();
             let depositAddress;
+            let userAddress = isDemo ? generateSimulatedAddress() : null;
+
 
             if (!isDemo) {
-                const userAddress = await showAddressInput();
+                // MODAL de entrada de dirección para el MODO REAL
+                userAddress = await showAddressInput();
                 if (!userAddress) {
-                    addLog("Cancelado. Debe introducir una dirección válida.", 'error');
+                    addLog("Operación cancelada. Dirección no proporcionada.", 'error');
                     btn.textContent = 'EJECUTAR PROTOCOLO BLINDAJE V13';
                     btn.disabled = false;
                     return;
                 }
-                newBlindaje.direccionDeposito = userAddress;
-                depositAddress = userAddress;
+            }
 
+            newBlindaje.direccionDeposito = userAddress;
+            depositAddress = userAddress;
+
+            if (!isDemo) {
                 addLog("Creando registro en Firestore...", 'info');
                 try {
                     const blindajeRef = path.getPrivateDocRef(BLINDAJE_COLLECTION, blindajeId);
@@ -354,11 +361,7 @@
                     btn.disabled = false;
                     return;
                 }
-
             } else {
-                 // Modo Demo
-                 newBlindaje.direccionDeposito = generateSimulatedAddress();
-                 depositAddress = newBlindaje.direccionDeposito;
                  addLog("REGISTRO DE BLINDAJE CREADO exitosamente (Simulación).", 'success');
             }
             
@@ -370,8 +373,11 @@
                 listenForBlindajeConfirmation(blindajeId);
                 btn.textContent = 'ESPERANDO CONFIRMACIÓN...';
                 btn.disabled = true; // El botón queda deshabilitado mientras se espera el pago
+            } else {
+                // Modo Demo: reactivar botón para repetir la simulación
+                btn.textContent = 'EJECUTAR PROTOCOLO BLINDAJE V13';
+                btn.disabled = false;
             }
-            // NOTA: Si es Modo Demo, el botón se rehabilita en startProtocol()
         }
         
         /**
@@ -380,7 +386,7 @@
          */
         function showAddressInput() {
             return new Promise(resolve => {
-                // Generar un ID único para la nueva instancia de modal
+                // Usamos un modal especial para la entrada de datos para evitar conflictos con el showMessage genérico
                 const modalWrapper = document.getElementById('modal-wrapper') || document.createElement('div');
                 modalWrapper.id = 'modal-wrapper';
                 document.body.appendChild(modalWrapper);
@@ -417,6 +423,7 @@
 
                 const handleSubmit = () => {
                     const address = inputElement.value.trim();
+                    // Validación simple de longitud y caracteres
                     if (address.length > 20 && /^[a-zA-Z0-9]+$/.test(address)) {
                         cleanup();
                         resolve(address);
@@ -463,13 +470,15 @@
                 // Si ya está activo, mostrar mensaje y el botón de Aterrizaje
                 addLog("Blindaje V13 se encuentra en estado ACTIVO. Listo para ATERRIZAJE (DCA).", 'success');
                 
+                // Cambiar estilo y texto del botón para la siguiente fase (DCA)
                 btn.classList.remove('btn-protocol');
                 btn.classList.add('bg-green-600', 'hover:bg-green-500', 'text-white', 'py-3', 'px-6', 'rounded-md', 'font-bold', 'transition');
                 btn.textContent = 'INICIAR DISTRIBUCIÓN DCA (ATERRIZAJE)';
                 
+                // Asignar acción para el Aterrizaje
                 btn.onclick = () => showMessage(
                     'Blindaje ACTIVO', 
-                    'El Blindaje está ACTIVO. Ahora debe cargar el código del **SISTEMA_ATERRIZAJE_V13** en el archivo `index.html` para continuar la distribución del capital.', 
+                    'El Blindaje está ACTIVO. Ahora debe cargar el código del **SISTEMA DE ATERRIZAJE V13 (DCA)** en el archivo `index.html` para continuar la distribución del capital.', 
                     'success'
                 );
                 
@@ -479,7 +488,7 @@
 
         /**
          * Muestra los detalles del blindaje (dirección y estado) al usuario en un modal.
-         * ESTE MODAL ES SIMPLE Y SOLO TIENE UN BOTÓN ACEPTAR (Manejado por showMessage).
+         * ESTE MODAL ES SIMPLE Y SOLO TIENE UN BOTÓN ACEPTAR.
          */
         async function showBlindajeDetails(id, estado, direccion, isDemo) {
             
@@ -487,12 +496,12 @@
             const messageBody = `
                 <p class="text-white mb-2 font-semibold">Estado: <span class="text-yellow-500">${estado}</span></p>
                 <p class="text-white mb-4 font-semibold">Dirección de Depósito:</p>
-                <div class="bg-gray-800 p-3 rounded-md break-all text-sm font-mono text-yellow-400">
+                <div class="bg-gray-800 p-3 rounded-md break-all text-sm font-mono text-yellow-400 select-all cursor-text">
                     ${direccion}
                 </div>
                 ${isDemo ? 
-                    '<p class="mt-4 text-gray-400 text-sm">Instrucción (DEMO): Deposite el monto a esta dirección para activar el blindaje (Modo Demo). Cuando presione Aceptar, el botón se reactivará.</p>' :
-                    '<p class="mt-4 text-white font-semibold">Instrucción: Deposite el monto necesario a la dirección indicada para activar el Blindaje en Modo Real. El sistema entrará en modo de espera.</p>'
+                    '<p class="mt-4 text-gray-400 text-sm">Instrucción (DEMO): Deposite el monto a esta dirección (simulada). Al presionar Aceptar, el botón se reactivará para una nueva simulación.</p>' :
+                    '<p class="mt-4 text-white font-semibold">Instrucción: Deposite el capital de Blindaje a la dirección indicada. El sistema ha entrado en modo de ESPERA ACTIVA en Firestore. Presione Aceptar para continuar.</p>'
                 }
             `;
             // showMessage devuelve una promesa que se resuelve cuando se presiona Aceptar
@@ -516,12 +525,18 @@
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     if (data.estado === BLINDAJE_ACTIVO) {
+                        // Importante: Detener la escucha una vez que se activa
+                        // En Firestore, el listener se detiene cuando el observador (onSnapshot) es desconectado.
+                        
                         addLog("¡DEPÓSITO CONFIRMADO! Blindaje V13 ACTIVADO.", 'success');
                         // Mostrar mensaje de éxito y cambiar a la fase DCA
                         showMessage('Blindaje Activado', 'El Blindaje V13 ha sido confirmado y está ACTIVO. Ahora puede proceder a la fase de Aterrizaje (DCA).', 'success')
                             .then(() => resumeBlindaje(data)); // Reanudar para cambiar el botón
+                            
+                        // Si se quiere detener explicitamente la escucha, se necesita la función de desuscripción.
+                        // Para este caso de uso simple, el listener puede vivir, o se puede reestructurar para almacenar la función de desuscripción.
+                        // Dejamos que el onSnapshot siga vivo, y la llamada a resumeBlindaje actualizará la UI.
                     } else if (data.estado === PENDIENTE_PAGO) {
-                        // El estado sigue siendo PENDIENTE_PAGO
                         addLog("Esperando confirmación de depósito...", 'info');
                     }
                 } else {
@@ -565,10 +580,16 @@
         // Inicializa el display del ID de la aplicación antes de la autenticación de Firebase
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('user-id-display').textContent = 'App ID: ' + window.appId;
+            // Asegurarse de que el botón se habilite al cargar por primera vez
+            if (!window.isFirebaseReady) {
+                document.getElementById('exec-btn').disabled = false;
+                document.getElementById('exec-btn').textContent = 'EJECUTAR PROTOCOLO BLINDAJE V13';
+            }
         });
     </script>
 </body>
 </html>
+
 
 
 
