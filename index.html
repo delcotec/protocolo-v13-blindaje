@@ -3,87 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Protocolo V13 | Solicitud de Blindaje OFFLINE</title>
-    <!-- Incluir Tailwind CSS (para estética) -->
+    <title>Protocolo V13 | Solicitud de Blindaje</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Incluir Fuentes de Google -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap">
     <style>
-        :root {
-            --color-fondo-oscuro: #0f172a; /* Slate-900 */
-            --color-consola: #1e293b; /* Slate-800 */
-            --color-texto-principal: #f8fafc; /* Slate-50 */
-            --color-borde-consola: #334155; /* Slate-700 */
-            --color-comando: #f59e0b; /* Amber-500 - Cambiado a Amber para Offline */
-            --color-exito: #4ade80; /* Green-400 */
-            --color-error: #f87171; /* Red-400 */
-            --color-advertencia: #fbbf24; /* Amber-400 */
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--color-fondo-oscuro);
-            color: var(--color-texto-principal);
+            background-color: #0d1117; /* Fondo oscuro tipo consola */
+            color: #ffffff;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             padding: 20px;
         }
+
         #terminal-card {
-            background: var(--color-consola);
-            border: 1px solid var(--color-borde-consola);
+            background: #1f2a37; /* Color de tarjeta más oscuro */
+            border: 1px solid #30363d;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
             border-radius: 12px;
+            padding: 30px;
             width: 100%;
-            max-width: 800px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            max-width: 700px;
         }
-        #output {
-            padding: 20px;
-            height: 400px;
+
+        #log-area {
+            height: 300px;
             overflow-y: auto;
-            white-space: pre-wrap;
-            font-family: 'Consolas', 'Monospace', monospace;
-            font-size: 14px;
-            line-height: 1.4;
-            flex-grow: 1;
-        }
-        .line-prompt { color: var(--color-comando); }
-        .line-success { color: var(--color-exito); }
-        .line-error { color: var(--color-error); }
-        .line-warning { color: var(--color-advertencia); }
-
-        /* Estilos para el botón EJECUTAR */
-        #run-button {
-            padding: 12px 25px;
-            background-color: #f59e0b; /* Amber-500 */
-            color: var(--color-fondo-oscuro);
-            font-weight: 700;
+            background-color: #010409; /* Fondo de log muy oscuro */
             border-radius: 8px;
-            transition: background-color 0.2s;
-            cursor: pointer;
-            box-shadow: 0 4px #d97706; /* Amber-600 */
-            border: none;
-            text-transform: uppercase;
-        }
-        #run-button:hover:not(:disabled) {
-            background-color: #facc15; /* Amber-400 */
-        }
-        #run-button:active:not(:disabled) {
-            box-shadow: 0 1px #d97706;
-            transform: translateY(3px);
-        }
-        #run-button:disabled {
-            background-color: #a1a1aa; /* Zinc-400 */
-            box-shadow: none;
-            cursor: not-allowed;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 0.875rem;
+            line-height: 1.4;
+            color: #b3b3b3; /* Color de texto suave */
         }
 
-        /* Estilos del modal (para reemplazar alerts) */
-        #modal {
+        .log-line {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .log-error {
+            color: #ff5555; /* Rojo para errores */
+            font-weight: 700;
+        }
+
+        .log-success {
+            color: #50fa7b; /* Verde para éxito/activo */
+            font-weight: 700;
+        }
+        
+        .log-instruction {
+            color: #8be9fd; /* Azul claro para instrucciones */
+        }
+
+        .log-state {
+            color: #ffb86c; /* Naranja para estados */
+        }
+
+        .log-pending {
+            color: #f1fa8c; /* Amarillo para pendiente */
+        }
+
+        .terminal-header {
+            color: #718096;
+            margin-bottom: 15px;
+            font-size: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #30363d;
+            padding-bottom: 10px;
+        }
+
+        .header-dots > div {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            display: inline-block;
+        }
+        .dot-red { background-color: #ff605c; }
+        .dot-yellow { background-color: #ffbd44; }
+        .dot-green { background-color: #00ca4e; }
+
+        .btn-protocol {
+            background-image: linear-gradient(to right, #ff8a00, #e25e00);
+            box-shadow: 0 4px #a04200;
+            transition: all 0.1s;
+        }
+
+        .btn-protocol:active {
+            box-shadow: 0 2px #a04200;
+            transform: translateY(2px);
+        }
+
+        /* Estilos del modal/pop-up personalizado */
+        .modal {
             position: fixed;
             top: 0;
             left: 0;
@@ -95,148 +113,283 @@
             align-items: center;
             z-index: 1000;
         }
-        #modal-content {
-            background: var(--color-consola);
+
+        .modal-content {
+            background-color: #2d3748;
             padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-            max-width: 90%;
-            width: 400px;
-            border: 1px solid var(--color-borde-consola);
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            border: 1px solid #4a5568;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 15px;
+        }
+
+        .modal-message {
+            color: #cbd5e0;
+            margin-bottom: 25px;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            background-color: #1a202c;
+            border: 1px solid #4a5568;
+            border-radius: 5px;
+            color: #ffffff;
+        }
+
+        .modal-button {
+            background-color: #48bb78;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: 700;
+            transition: background-color 0.2s;
+        }
+
+        .modal-button:hover {
+            background-color: #38a169;
         }
     </style>
 </head>
 <body>
 
     <div id="terminal-card">
-        <div class="p-3 bg-gray-700 rounded-t-xl flex items-center">
-            <div class="h-3 w-3 bg-red-500 rounded-full mr-2"></div>
-            <div class="h-3 w-3 bg-yellow-500 rounded-full mr-2"></div>
-            <div class="h-3 w-3 bg-green-500 rounded-full"></div>
-            <span class="ml-auto text-xs text-gray-400 font-semibold">Protocolo V13.exe - MODO OFFLINE/DEMO</span>
+        <div class="terminal-header">
+            <div class="header-dots">
+                <div class="dot-red"></div>
+                <div class="dot-yellow"></div>
+                <div class="dot-green"></div>
+            </div>
+            <span>Protocolo V13.exe - <span id="protocol-status">NÚCLEO INACTIVO</span></span>
         </div>
-        <div id="output"></div>
-        <div class="p-4 border-t border-gray-700 flex justify-center">
-            <button id="run-button" onclick="iniciarBlindaje()">EJECUTAR PROTOCOLO BLINDAJE V13</button>
+
+        <div id="log-area" class="log-area">
+            <!-- El log se inserta aquí con JavaScript -->
+        </div>
+
+        <button id="execute-button" class="btn-protocol w-full py-3 rounded-xl text-white font-bold text-lg hover:brightness-110">
+            EJECUTAR PROTOCOLO BLINDAJE V13
+        </button>
+    </div>
+
+    <!-- Modal para ingresar la dirección de retorno -->
+    <div id="input-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Solicitud de Retorno</div>
+            <div class="modal-message">Introduzca su Dirección de Retorno (Billetera) para completar el registro.</div>
+            <input type="text" id="wallet-address-input" class="modal-input" placeholder="Dirección de Billetera Válida (Simulación)">
+            <button id="modal-submit-button" class="modal-button">Aceptar</button>
+        </div>
+    </div>
+    
+    <!-- Modal genérico para mensajes (reemplaza alert) -->
+    <div id="message-modal" class="modal">
+        <div class="modal-content">
+            <div id="message-modal-title" class="modal-title">Mensaje del Sistema</div>
+            <div id="message-modal-message" class="modal-message"></div>
+            <button id="message-modal-button" class="modal-button">Aceptar</button>
         </div>
     </div>
 
-    <!-- Modal para mensajes -->
-    <div id="modal">
-        <div id="modal-content" class="text-center">
-            <p id="modal-message" class="text-lg mb-4"></p>
-            <button id="modal-close" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition">Aceptar</button>
-        </div>
-    </div>
 
     <script>
-        // --- CONFIGURACIÓN DE CRIPTOMONEDA ---
-        // DEBE REEMPLAZAR ESTE VALOR CON LA DIRECCIÓN REAL DE LA WALLET
-        let DIRECCION_CRIPTOMONEDA = "TU_DIRECCION_DE_USDT_O_BTC_AQUI"; 
+        // Variables globales
+        let logArea;
+        let protocolStatusElement;
+        let executeButton;
+        let inputModal;
+        let walletAddressInput;
+        let messageModal;
+        let messageModalTitle;
+        let messageModalMessage;
+
+        // Estado del sistema V13
+        let systemState = 'INACTIVO';
+        let walletAddress = '';
+        let transactionCount = 0;
+        let depositAddress = '';
         
-        // --- UTILIDADES DE UI Y LOGGING ---
+        // Simulación de comando PADRE para salir del bucle PENDIENTE_PAGO
+        const PADRE_COMMAND = "PADRE: \"REANUDAR V13 SIN SIMULACION Y SALIR DE TODO LOOP\"";
 
-        const output = document.getElementById('output');
-        const runButton = document.getElementById('run-button');
-        const modal = document.getElementById('modal');
-        const modalMessage = document.getElementById('modal-message');
-        const modalClose = document.getElementById('modal-close');
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inicializar elementos del DOM
+            logArea = document.getElementById('log-area');
+            protocolStatusElement = document.getElementById('protocol-status');
+            executeButton = document.getElementById('execute-button');
+            inputModal = document.getElementById('input-modal');
+            walletAddressInput = document.getElementById('wallet-address-input');
+            messageModal = document.getElementById('message-modal');
+            messageModalTitle = document.getElementById('message-modal-title');
+            messageModalMessage = document.getElementById('message-modal-message');
 
-        modalClose.onclick = () => { modal.style.display = 'none'; };
+            // Event Listeners
+            executeButton.addEventListener('click', handleExecuteProtocol);
+            document.getElementById('modal-submit-button').addEventListener('click', handleWalletSubmit);
+            document.getElementById('message-modal-button').addEventListener('click', hideMessageModal);
 
-        // Función para mostrar mensajes en el modal
-        function showMessage(message, isError = false) {
-            modalMessage.textContent = message;
-            modalMessage.className = isError ? 'text-lg mb-4 line-error' : 'text-lg mb-4 line-success';
-            modal.style.display = 'flex';
-        }
+            // Iniciar el sistema
+            logMessage('INICIANDO NÚCLEO V13...', 'success');
+            setTimeout(() => {
+                logMessage('NÚCLEO ACTIVO. Listo para ejecutar protocolo.', 'success');
+                protocolStatusElement.textContent = 'NÚCLEO ACTIVO';
+                executeButton.disabled = false;
+            }, 1500);
+        });
 
-        // Función para escribir en la consola virtual
-        function log(message, type = 'default') {
-            const span = document.createElement('span');
-            span.textContent = `> ${message}`;
+        // --- Funciones de Utilidad de Log y Modal ---
+
+        /**
+         * Muestra un mensaje en el área de log.
+         * @param {string} message - El texto a loggear.
+         * @param {string} type - El tipo de mensaje ('error', 'success', 'instruction', 'state', 'pending', o vacío).
+         */
+        function logMessage(message, type = '') {
+            const line = document.createElement('div');
+            line.className = 'log-line';
+            line.textContent = `> ${message}`;
             
-            switch(type) {
-                case 'prompt':
-                    span.className = 'line-prompt';
-                    break;
-                case 'success':
-                    span.className = 'line-success';
-                    break;
-                case 'error':
-                    span.className = 'line-error';
-                    break;
-                case 'warning':
-                    span.className = 'line-warning';
-                    break;
-                default:
-                    span.style.color = 'var(--color-texto-principal)';
+            if (type) {
+                line.classList.add(`log-${type}`);
             }
-            output.appendChild(span);
-            output.appendChild(document.createElement('br'));
-            output.scrollTop = output.scrollHeight;
+
+            logArea.appendChild(line);
+            // Hacer scroll al final
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+        
+        /**
+         * Muestra el modal de mensaje genérico (reemplazo de alert).
+         */
+        function showMessageModal(title, message) {
+            messageModalTitle.textContent = title;
+            messageModalMessage.textContent = message;
+            messageModal.style.display = 'flex';
         }
 
-        // --- INICIALIZACIÓN MODO OFFLINE ---
-        function initializeOfflineMode() {
-            log("Iniciando NÚCLEO del Protocolo V13...", 'default');
-            log("MODO DE FALLO DETECTADO: NO se pudo conectar a Firebase.", 'warning');
-            log("Activando 'Protocolo de Contingencia (Modo Offline/Demo)'...", 'warning');
-            log("SISTEMA ACTIVO. Listo para Ejecutar Protocolo.", 'success');
-            runButton.disabled = false;
+        /**
+         * Oculta el modal de mensaje genérico.
+         */
+        function hideMessageModal() {
+            messageModal.style.display = 'none';
         }
 
-        // --- FUNCIÓN PRINCIPAL DE BLINDAJE (MODO OFFLINE) ---
-        window.iniciarBlindaje = async function() {
-            runButton.disabled = true;
-            log("--- EJECUTANDO PROTOCOLO BLINDAJE V13 (OFFLINE) ---", 'prompt');
+        // --- Lógica del Protocolo ---
+        
+        /**
+         * Genera una dirección de depósito simulada.
+         */
+        function generateDepositAddress() {
+            // Genera una cadena alfanumérica simulada (ej. THJ65N2uWc9XyY7E7u6H9K3P4H8R8G2T9V)
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < 34; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return 'TH' + result.toUpperCase();
+        }
 
-            try {
-                if (DIRECCION_CRIPTOMONEDA === "TU_DIRECCION_DE_USDT_O_BTC_AQUI") {
-                    log("ERROR: La dirección de criptomoneda no ha sido configurada. Solicitando valor...", 'error');
+        /**
+         * Lógica principal al hacer clic en el botón de Ejecutar.
+         */
+        function handleExecuteProtocol() {
+            executeButton.disabled = true;
+            logMessage('EJECUTANDO PROTOCOLO BLINDAJE V13 (OFFLINE/DEMO)...');
+
+            if (systemState === 'INACTIVO') {
+                // Paso 1: Iniciar el registro y pedir la dirección de retorno
+                setTimeout(() => {
+                    logMessage('Simulando creación de nuevo registro (Modo Demo)...');
+                    systemState = 'REGISTRANDO';
+                    inputModal.style.display = 'flex'; // Mostrar modal de input
+                    executeButton.disabled = false;
+                }, 1000);
+
+            } else if (systemState === 'PENDIENTE_PAGO') {
+                transactionCount++; // Contar el intento de "pago"
+                logMessage(`Reintentando Blindaje (Intento ${transactionCount + 1})...`, 'pending');
+
+                // *** Lógica de SALIDA DEL LOOP (Comando PADRE) ***
+                if (transactionCount >= 2) {
+                    // Si es el tercer intento de ejecución (o más), forzamos la activación
+                    logMessage(`Comando recibido: ${PADRE_COMMAND}`, 'instruction');
+                    logMessage('SALIDA DE LOOP FORZADA. Ignorando simulación de pago en Modo Demo.', 'success');
+                    logMessage('Verificando pago... (Simulación Rápida)', 'success');
                     
-                    // Simulamos la entrada de la dirección
-                    const tempDir = prompt("Introduzca su dirección de billetera (USDT o BTC) AHORA:");
-                    
-                    if (tempDir && tempDir.length > 10) {
-                        DIRECCION_CRIPTOMONEDA = tempDir.trim();
-                        log(`Dirección Recibida: ${DIRECCION_CRIPTOMONEDA.substring(0, 10)}...`, 'success');
-                        log("Reintentando Blindaje...", 'default');
-                        await new Promise(resolve => setTimeout(resolve, 500)); // Pequeña espera
-                        window.iniciarBlindaje(); // Llama a la función de nuevo con la dirección configurada
-                        return;
-                    } else {
-                        log("Cancelado. Debe introducir una dirección válida.", 'error');
-                        showMessage("Cancelado. Debe introducir una dirección de billetera válida para continuar.", true);
-                        runButton.disabled = false;
-                        return;
-                    }
+                    setTimeout(() => {
+                        logMessage('PAGO CONFIRMADO (Simulación Forzada)', 'success');
+                        logMessage('ACTIVANDO BLINDAJE V13...', 'success');
+                        systemState = 'BLINDAJE_ACTIVO';
+                        protocolStatusElement.textContent = 'BLINDAJE_ACTIVO';
+                        executeButton.textContent = 'BLINDAJE ACTIVO - FINALIZADO';
+                        executeButton.classList.remove('btn-protocol');
+                        executeButton.classList.add('bg-green-600', 'hover:bg-green-700', 'shadow-green-900/50');
+                        logMessage(`Estado Final: ${systemState}`, 'success');
+                        executeButton.disabled = true;
+                    }, 1000);
+                } else {
+                    // Simular que el pago aún no llega o la transacción no se confirma (loop normal)
+                    setTimeout(() => {
+                        logMessage('REGISTRO DE BLINDAJE CREADO exitosamente (Simulación).', 'success');
+                        logMessage('Estado: PENDIENTE_PAGO', 'pending');
+                        logMessage(`DIRECCIÓN DE DEPÓSITO GENERADA: ${depositAddress}`, 'state');
+                        logMessage('Instrucción: Deposite el monto a esta dirección para activar el blindaje (Modo Demo).', 'instruction');
+                        executeButton.disabled = false;
+                    }, 1500);
                 }
 
-                // 2. Simular Creación de solicitud
-                log("Simulando creación de nuevo registro (Modo Demo)...", 'default');
-                await new Promise(resolve => setTimeout(resolve, 1500)); 
+            } else if (systemState === 'BLINDAJE_ACTIVO') {
+                 // El sistema ya está activo, no hace nada
+                logMessage('El Blindaje V13 ya está activo. Operación finalizada.', 'success');
+                executeButton.disabled = true;
 
-                log("REGISTRO DE BLINDAJE CREADO exitosamente (Simulación).", 'success');
-                log("Estado: PENDIENTE_PAGO", 'prompt');
-                log(`DIRECCIÓN DE DEPÓSITO GENERADA: ${DIRECCION_CRIPTOMONEDA}`, 'prompt');
-                log("Instrucción: Deposite el monto a esta dirección para activar el blindaje (Modo Demo).", 'default');
-
-                showMessage(
-                    `SOLICITUD V13 CREADA EN MODO OFFLINE. Estado: PENDIENTE DE PAGO. Dirección de Depósito: ${DIRECCION_CRIPTOMONEDA}.`, 
-                    false
-                );
-
-            } catch (error) {
-                log(`ERROR al procesar solicitud: ${error.message}`, 'error');
-                showMessage(`ERROR: Ocurrió un fallo en la simulación.`, true);
-            } finally {
-                runButton.disabled = false;
+            } else {
+                // Estado inesperado
+                logMessage('ERROR: Estado de sistema inesperado.', 'error');
+                executeButton.disabled = false;
             }
-        };
+        }
 
-        // Iniciar el modo offline al cargar la página
-        window.onload = initializeOfflineMode;
+        /**
+         * Maneja el envío de la dirección de billetera desde el modal.
+         */
+        function handleWalletSubmit() {
+            const address = walletAddressInput.value.trim();
+            if (address.length < 20) {
+                // Reemplazo de alert por modal
+                showMessageModal('ERROR DE VALIDACIÓN', 'Por favor, introduzca una dirección de billetera válida (mínimo 20 caracteres para simulación).');
+                return;
+            }
+
+            walletAddress = address;
+            inputModal.style.display = 'none'; // Ocultar modal de input
+            
+            // Continuar con el proceso de registro
+            logMessage(`DIRECCIÓN DE RETORNO REGISTRADA: ${walletAddress}`, 'state');
+            
+            // Simular creación del registro V13 y depósito
+            depositAddress = generateDepositAddress();
+            systemState = 'PENDIENTE_PAGO';
+
+            logMessage('REGISTRO V13 CREADO EN MODO OFFLINE (Simulación).', 'success');
+            logMessage(`Estado: ${systemState}`, 'pending');
+            logMessage(`Dirección de Depósito: ${depositAddress}`, 'state');
+            logMessage('Instrucción: Deposite el monto a esta dirección para activar el blindaje (Modo Demo).', 'instruction');
+            
+            // Re-habilitar el botón para el siguiente paso
+            executeButton.disabled = false;
+        }
+
     </script>
 </body>
 </html>
