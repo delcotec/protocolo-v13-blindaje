@@ -216,7 +216,7 @@
         // Estado del sistema V13
         let systemState = 'INACTIVO';
         let walletAddress = '';
-        let transactionCount = 0;
+        let transactionCount = 0; // Contador de reintentos en PENDIENTE_PAGO
         let depositAddress = '';
         
         // Simulación de comando PADRE para salir del bucle PENDIENTE_PAGO
@@ -316,12 +316,12 @@
                 }, 1000);
 
             } else if (systemState === 'PENDIENTE_PAGO') {
-                transactionCount++; // Contar el intento de "pago"
-                logMessage(`Reintentando Blindaje (Intento ${transactionCount + 1})...`, 'pending');
+                transactionCount++; // Aumentar el contador de intentos
+                logMessage(`REINTENTANDO BLINDAJE (Intento ${transactionCount + 1})...`, 'pending');
 
                 // *** Lógica de SALIDA DEL LOOP (Comando PADRE) ***
-                if (transactionCount >= 2) {
-                    // Si es el tercer intento de ejecución (o más), forzamos la activación
+                // El comando PADRE se activa en el tercer clic después de llegar a PENDIENTE_PAGO (transactionCount = 2)
+                if (transactionCount === 2) { 
                     logMessage(`Comando recibido: ${PADRE_COMMAND}`, 'instruction');
                     logMessage('SALIDA DE LOOP FORZADA. Ignorando simulación de pago en Modo Demo.', 'success');
                     logMessage('Verificando pago... (Simulación Rápida)', 'success');
@@ -338,7 +338,7 @@
                         executeButton.disabled = true;
                     }, 1000);
                 } else {
-                    // Simular que el pago aún no llega o la transacción no se confirma (loop normal)
+                    // Simular que el pago aún no llega (Intento 1 y 2)
                     setTimeout(() => {
                         logMessage('REGISTRO DE BLINDAJE CREADO exitosamente (Simulación).', 'success');
                         logMessage('Estado: PENDIENTE_PAGO', 'pending');
@@ -354,8 +354,8 @@
                 executeButton.disabled = true;
 
             } else {
-                // Estado inesperado
-                logMessage('ERROR: Estado de sistema inesperado.', 'error');
+                // Estado inesperado (o REGISTRANDO)
+                logMessage('ERROR: Sistema en estado de registro. Espere la entrada de la billetera.', 'error');
                 executeButton.disabled = false;
             }
         }
@@ -373,6 +373,9 @@
 
             walletAddress = address;
             inputModal.style.display = 'none'; // Ocultar modal de input
+            
+            // ************ CORRECCIÓN CLAVE: Reiniciar el contador ************
+            transactionCount = 0; 
             
             // Continuar con el proceso de registro
             logMessage(`DIRECCIÓN DE RETORNO REGISTRADA: ${walletAddress}`, 'state');
@@ -393,5 +396,6 @@
     </script>
 </body>
 </html>
+
 
 
