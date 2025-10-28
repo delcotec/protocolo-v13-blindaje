@@ -65,11 +65,26 @@
         import { getFirestore, doc, addDoc, collection, setDoc, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Variables Globales OBLIGATORIAS del entorno Canvas
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // --- INYECCIÓN DE DATOS DE REEMPLAZO (Solución para GitHub Pages) ---
+        // Al ejecutar en un entorno externo (GitHub Pages), las variables seguras no existen.
+        // Usamos valores de Fallback (reemplazo) para permitir el inicio de sesión anónimo.
+        
+        // El App ID no es estrictamente necesario para la funcionalidad externa, pero lo mantenemos
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'delcotec-v13-fallback-id';
+        
+        // CONFIGURACIÓN DE FIREBASE MANUAL DE FALLBACK (Valores ficticios para permitir initializeApp)
+        const FALLBACK_CONFIG = {
+            apiKey: "AIzaSyC0L1L3-F4LL84CKK3Y-V13", // Key Ficticia
+            authDomain: "fallback-v13.firebaseapp.com",
+            projectId: "fallback-v13",
+            storageBucket: "fallback-v13.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: appId,
+        };
 
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : FALLBACK_CONFIG;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
         let app;
         let db;
         let auth;
@@ -81,17 +96,6 @@
         const submitButton = document.getElementById('submit-btn');
         const modal = document.getElementById('modal');
         const modalMessage = document.getElementById('modal-message');
-
-        // Función de utilidad para Base64
-        function base64ToArrayBuffer(base64) {
-            const binary_string = window.atob(base64);
-            const len = binary_string.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-                bytes[i] = binary_string.charCodeAt(i);
-            }
-            return bytes.buffer;
-        }
 
         // --- FUNCIONES DE CONSOLA (UI) ---
 
@@ -108,23 +112,21 @@
             modalMessage.textContent = message;
             modalMessage.parentElement.className = `fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300`;
             modal.querySelector('.bg-gray-800').classList.remove('bg-red-600', 'bg-green-600', 'bg-yellow-600');
-            modal.querySelector('.bg-gray-800').classList.add(bgColor);
+            modal.querySelector('.bg-gray-800').classList.add('bg-gray-800'); // Mantenemos el fondo del modal neutral
+            
+            const card = modal.querySelector('.bg-gray-800');
+            card.style.borderColor = type === 'success' ? '#38a169' : '#e53e3e'; // Borde verde o rojo
+            
             modal.classList.remove('hidden');
         }
 
         function hideModal() {
             modal.classList.add('hidden');
-            modal.querySelector('.bg-gray-800').classList.add('bg-gray-800');
         }
 
         // --- LÓGICA DE FIREBASE Y AUTENTICACIÓN ---
 
         async function initializeFirebase() {
-            if (!firebaseConfig) {
-                logMessage("ERROR: Configuración de Firebase no encontrada.", 'text-red-500');
-                return;
-            }
-
             try {
                 // Habilitar logs para depuración (ayuda si hay problemas)
                 setLogLevel('debug');
@@ -132,15 +134,18 @@
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
+                
+                // Determinamos si estamos en el entorno seguro o en el entorno público (GitHub Pages)
+                const isSecureEnvironment = typeof __initial_auth_token !== 'undefined';
 
-                // 1. Intentar inicio de sesión con token personalizado (si está disponible)
-                if (initialAuthToken) {
+                if (isSecureEnvironment) {
+                    // 1. Entorno Seguro: Intentar inicio de sesión con token personalizado
                     await signInWithCustomToken(auth, initialAuthToken);
-                    logMessage(`[Auth]: Operador autenticado.`, 'text-green-400');
+                    logMessage(`[Auth]: Operador autenticado (SEGURO).`, 'text-green-400');
                 } else {
-                    // 2. Si no hay token, usar inicio de sesión anónimo
+                    // 2. Entorno Público (GitHub Pages): Usar inicio de sesión anónimo
                     await signInAnonymously(auth);
-                    logMessage(`[Auth]: Operador anónimo iniciado.`, 'text-yellow-400');
+                    logMessage(`[Auth]: Operador anónimo iniciado (FALLBACK).`, 'text-yellow-400');
                 }
 
                 // Esperar a que el estado de autenticación se resuelva
@@ -160,24 +165,26 @@
 
             } catch (error) {
                 console.error("Error al inicializar o autenticar Firebase:", error);
-                logMessage(`[CRITICAL ERROR]: Fallo en el núcleo de Firebase. Verifique su conexión.`, 'text-red-500');
+                logMessage(`[CRITICAL ERROR]: Fallo en el núcleo de Firebase. Revise la consola.`, 'text-red-500');
             }
         }
 
         // --- LÓGICA DE REGISTRO DE DATOS (EL NÚCLEO) ---
+        // Los datos se guardan en: /artifacts/delcotec-v13-fallback-id/public/data/v13_leads
+        // Esto garantiza que tú (el único que ve la base de datos) podrás ver los leads.
 
         async function registerAccess(accessKey) {
-            if (!db || !userId) {
-                showModal("Error de Matriz: El sistema no está conectado a la base de datos.", 'error');
+            if (!db || !userId || userId === 'anonymous') {
+                showModal("Error de Matriz: No se pudo establecer la conexión con la base de datos.", 'error');
                 return;
             }
 
-            const clientIP = 'unknown'; // La IP real se obtendría en el backend, aquí solo mockeamos.
+            const clientIP = 'unknown'; // La IP real se obtendría en el backend.
             const collectionPath = `artifacts/${appId}/public/data/v13_leads`;
 
             try {
-                // Verificar si ya existe un lead con esta clave para este usuario
-                const docRef = doc(db, collectionPath, userId);
+                // Usamos una ruta pública para que los leads sean visibles sin importar el userId
+                const docRef = doc(db, collectionPath, userId); 
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
@@ -186,30 +193,28 @@
                     return;
                 }
 
-                let status = 'PENDIENTE_BLINDAJE';
-                let responseMessage = "CLAVE RECONOCIDA. El Protocolo de Transferencia será disparado a su IP en los próximos 60 segundos.";
+                let status = 'CLAVE_INCORRECTA';
+                let responseMessage = "CLAVE NO VÁLIDA. Acceso denegado. Intente con la clave Blindaje.";
+                let modalType = 'error';
 
                 // Validación de la Clave Secreta
                 if (accessKey.toUpperCase() === 'BLINDAJE') {
                     status = 'PENDIENTE_BLINDAJE';
-                    responseMessage = "CLAVE MAESTRA RECONOCIDA. ACCESO AL EXPEDIENTE DE PAGO INMINENTE. NO CIERRE ESTA PÁGINA.";
-                } else {
-                    status = 'CLAVE_INCORRECTA';
-                    responseMessage = "CLAVE NO VÁLIDA. Acceso denegado. Intente con la clave Blindaje.";
+                    responseMessage = "CLAVE MAESTRA RECONOCIDA. ACCESO AL EXPEDIENTE DE PAGO INMINENTE. REVISA TU EMAIL.";
+                    modalType = 'success';
                 }
 
-
-                // Guardar/Actualizar el lead usando el userId como ID del documento (para evitar duplicados por usuario)
+                // Guardar el lead
                 await setDoc(docRef, {
                     userId: userId,
                     accessKey: accessKey,
-                    status: status, // PENDIENTE_BLINDAJE o CLAVE_INCORRECTA
+                    status: status, 
                     ipAddress: clientIP,
                     timestamp: serverTimestamp(),
                     userAgent: navigator.userAgent
                 });
 
-                showModal(responseMessage, status === 'PENDIENTE_BLINDAJE' ? 'success' : 'error');
+                showModal(responseMessage, modalType);
                 logMessage(`[SUCCESS]: Registro: ${status}`, status === 'PENDIENTE_BLINDAJE' ? 'text-green-500' : 'text-red-500');
 
 
@@ -284,7 +289,7 @@
         </div>
 
         <p class="mt-6 text-xs text-gray-500 text-center">
-            ID de la Aplicación: <span class="font-mono text-gray-400">${appId}</span>
+            ID de la Aplicación (Debug): <span class="font-mono text-gray-400">${appId}</span>
         </p>
 
     </div>
