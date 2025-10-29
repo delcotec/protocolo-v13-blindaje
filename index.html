@@ -16,7 +16,7 @@
                         'accent-cobalt': '#005691', // Azul Cobalto Profundo (Confianza, Legalidad)
                         'text-highlight': '#C0D6E4', // Gris Frío Claro (Énfasis Serio)
                         'text-standard': '#E0E6EB', // Texto Base
-                        'alert-warning': '#C27B2B', // Naranja Quemado Profundo (Advertencia/Atención)
+                        'alert-warning': '#C27B2B', // Naranja Quemado Profundo (Advertencia/Atención, reemplaza al rojo)
                         'alert-error-bg': 'rgba(194, 123, 43, 0.1)', // Fondo de error sutil
                     },
                     fontFamily: {
@@ -54,7 +54,7 @@
             border-radius: 4px;
             font-weight: 600;
         }
-        /* Colores de estado: Evitando el rojo de peligro */
+        /* Colores de estado: Evitando el rojo de peligro y usando naranja quemado para errores */
         .status-ready { border-color: #005691; background-color: rgba(0, 86, 145, 0.1); color: #C0D6E4; }
         .status-loading { border-color: #6A798A; background-color: rgba(106, 121, 138, 0.1); color: #E0E6EB; } /* Gris más frío para cargando */
         .status-error { border-color: var(--alert-warning); background-color: var(--alert-error-bg); color: var(--alert-warning); } /* Naranja quemado para error */
@@ -128,11 +128,10 @@
         import { getFirestore, collection, addDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // =========================================================================================
-        // !!! ATENCIÓN: CONFIGURACIÓN FUERA DEL ENTORNO DE SIMULACIÓN (REEMPLAZAR)
+        // !!! ATENCIÓN: CONFIGURACIÓN PARA DESPLIEGUE EN ENTORNO REAL (GITHUB)
+        // ** DEBE REEMPLAZAR los valores placeholder en 'FIREBASE_CONFIG' con sus credenciales reales. **
         // =========================================================================================
         
-        // ** COMANDE: Debe reemplazar el contenido de la constante 'FIREBASE_CONFIG' 
-        // con las credenciales reales de su proyecto. **
         const FIREBASE_CONFIG = {
             apiKey: "PEGA_AQUI_TU_API_KEY", 
             authDomain: "PEGA_AQUI_TU_AUTH_DOMAIN",
@@ -166,10 +165,11 @@
             messageText.textContent = text;
         }
 
-        // --- Configuración e Inicialización de Firebase (Adaptada para GITHUB) ---
+        // --- Configuración e Inicialización de Firebase ---
         try {
+            // Validación de credenciales para forzar la configuración si se detecta el placeholder
             if (FIREBASE_CONFIG.apiKey.includes('PEGA_AQUI_TU_API_KEY')) {
-                throw new Error("ERROR [E-CFG]: Configuración de credenciales incompleta. Verifique 'FIREBASE_CONFIG'.");
+                throw new Error("ERROR [E-CFG]: Configuración de credenciales incompleta. Por favor, reemplace los placeholders en 'FIREBASE_CONFIG'.");
             }
             
             setLogLevel('debug');
@@ -189,6 +189,7 @@
                     isAuthReady = true;
                 } else {
                     try {
+                        // Intentar autenticación anónima si no hay usuario
                         await signInAnonymously(auth);
                     } catch (error) {
                         console.error("Error de autenticación:", error);
@@ -207,11 +208,11 @@
             authStatusText.textContent = `ERROR [I-00]: Fallo de Inicialización de Infraestructura. ${error.message}`;
             activateButton.disabled = true;
             isAuthReady = false;
-            displayMessage(`ERROR [I-00]: Fallo de Inicialización. Revise la consola para detalles.`, 'status-error');
+            displayMessage(`ERROR [I-00]: Fallo de Inicialización. Revise la consola y el 'FIREBASE_CONFIG'.`, 'status-error');
         }
 
 
-        // --- Función del Blindaje T-01 (Lógica sin cambios) ---
+        // --- Función del Blindaje T-01 (Lógica para guardar datos) ---
         window.handleBlindajeT01 = async () => {
             if (!isAuthReady) {
                 displayMessage("Error: Núcleo no operativo. Esperando sincronización.", 'status-error');
@@ -221,6 +222,7 @@
             const address = cryptoAddressInput.value.trim();
 
             if (address.length < 20) {
+                // Usando el Naranja Quemado Profundo para indicar la ADVERTENCIA (Error de Validación)
                 displayMessage("ADVERTENCIA [E-02]: La Dirección Pública debe ser válida para la certificación (mínimo 20 caracteres).", 'status-error');
                 return;
             }
@@ -230,7 +232,7 @@
             displayMessage("Blindaje T-01 en curso. Registrando Petición en el Ledger de Cumplimiento...", 'status-loading');
 
             try {
-                // Ruta de la colección pública para el Blindaje T-01
+                // Colección pública (se puede acceder con el APP_ID)
                 const collectionPath = `artifacts/${APP_ID}/public/data/blindaje_t01_requests`;
                 const blindajeCollection = collection(db, collectionPath);
 
@@ -252,18 +254,19 @@
                     'status-success'
                 );
                 console.log(`Blindaje T-01 registrado. Document ID: ${docRef.id}`);
-                cryptoAddressInput.disabled = true;
+                cryptoAddressInput.disabled = true; // Bloquear el campo tras el éxito
 
             } catch (e) {
                 // Fallo:
                 console.error("Error al registrar Blindaje T-01:", e);
                 displayMessage(`FALLO CRÍTICO [T-01]: Error en la comunicación con el Ledger. ${e.message}. Revise su conexión y configuración.`, 'status-error');
             } finally {
-                // El campo de dirección solo se desbloquea si hay un error
-                if (cryptoAddressInput.disabled && messageContainer.className.includes('status-error')) {
-                    cryptoAddressInput.disabled = false;
+                // El botón se habilita de nuevo (excepto si fue exitoso)
+                if (messageContainer.className.includes('status-success')) {
+                    // No se habilita el botón si fue exitoso
+                } else {
+                    activateButton.disabled = false;
                 }
-                activateButton.disabled = false;
                 activateButton.textContent = 'ACTIVAR BLINDAJE T-01 Y CERTIFICAR CUMPLIMIENTO';
             }
         };
