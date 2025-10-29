@@ -119,17 +119,15 @@
 
     <script type="module">
         // =========================================================================================
-        // ⚔️ NÚCLEO INMUTABLE V13.0.6 - EJECUCIÓN CERO FRICCIÓN
-        // * NO SE REQUIERE MODIFICAR NADA. LOS VALORES HARDCODEADOS ASEGURAN LA OPERACIÓN. *
+        // ⚔️ NÚCLEO INMUTABLE V13.1.0 - FUSIÓN HEXA-QUÁNTICA (6 ACCIONES SIMULTÁNEAS)
         // =========================================================================================
         
-        // Simulación de los imports para evitar errores en entornos sin servidor
+        // Simulación de los imports para evitar errores en entornos sin servidor (Modo ZRD)
         const initializeApp = (config) => ({ name: "ZRD_APP" });
         const getAuth = (app) => ({});
         const getFirestore = (app) => ({});
         const signInAnonymously = async (auth) => ({ user: { uid: 'ZRD_USER_' + Date.now() } });
         const onAuthStateChanged = (auth, callback) => {
-            // Forzar el modo local ZRD
             const simulatedUser = { uid: 'ZRD_USER_' + Date.now() };
             setTimeout(() => callback(simulatedUser), 100);
         };
@@ -140,11 +138,11 @@
 
 
         // Constantes del NODO ALTO (Derivadas 1 y 3)
-        // ** URL DE PAGO ANULADA Y REEMPLAZADA POR UN MENSAJE DE RE-RUTA DIRECTA **
-        const URL_CHECKOUT_FINAL = "https://checkout.incondicional.com/pago_cripto_v13"; 
+        // ** URL DE ÉXITO FINAL (Redirección de Pago Anulado) **
+        const URL_CHECKOUT_FINAL = "https://jorgeluis.vercel.app/gracias"; // DESTINO TRAS EJECUCIÓN
         
-        // ** WEBHOOK ANULADO Y REEMPLAZADO POR UN SIMULADOR DE NOTIFICACIÓN **
-        const URL_WEBHOOK_ESCALADO = "https://hooks.zapier.com/universal/v1/simulacion-ame"; 
+        // ** WEBHOOK REAL: APUNTA A SU PUENTE LOCAL (puente_full.py) en el puerto 8001 **
+        const URL_WEBHOOK_ESCALADO = "http://127.0.0.1:8001/ejecutar"; // ENLACE INELUDIBLE
         
         const CIERRE_OFERTA_AME = '2025-11-01T14:30:00Z'; 
 
@@ -175,7 +173,7 @@
 
         // --- Inicialización Simplificada (Protocolo ZRD) ---
         (function initZRD() {
-            // No se necesitan credenciales reales; el código solo simula el estado ZRD.
+            // Se fuerza el modo ZRD (Riesgo Cero)
             const simulatedUser = { uid: 'ZRD_USER_' + Date.now() };
             userId = simulatedUser.uid;
             userIdDisplay.textContent = userId;
@@ -187,7 +185,7 @@
 
 
         // =========================================================================================
-        // 🚀 FUNCIÓN CENTRAL: BLINDAJE Y DISPARO DE PAGO ANULADO (Derivadas 1 y 2)
+        // 🚀 FUNCIÓN CENTRAL V13.1.0: FUSIÓN HEXA-QUÁNTICA
         // =========================================================================================
         window.handleBlindajeT01 = async () => {
             const address = cryptoAddressInput.value.trim();
@@ -198,42 +196,100 @@
             }
 
             activateButton.disabled = true;
-            activateButton.textContent = 'EJECUTANDO PROTOCOLO (VALIDACIÓN DE CUMPLIMIENTO)...';
-            displayMessage("Blindaje T-01 en curso. Registrando Petición en el Ledger de Cumplimiento...", 'status-loading');
+            activateButton.textContent = 'EJECUTANDO PROTOCOLO (HEXA-FUSIÓN: 6 Nodos de Venta)...';
+            displayMessage("Blindaje T-01 en curso. Disparando Ejecución Cuántica Múltiple...", 'status-loading');
 
-            const leadData = {
-                blindajeAddress: address,
-                syncPointId: userId,
-                timestamp: new Date().toISOString(),
-                protocolVersion: 'V13.0.6 (AME)',
-                status: 'T-01_CERTIFICACION_COMPLETADA'
+            const mensajeVenta = 
+                `🔥 [VENTA CRÍTICA $1,777 USD - ALFA V13.1.0] 🔥\n` +
+                `NUEVO LEAD CAPTURADO Y BLINDADO.\n` +
+                `ID VÍNCULO: ${userId}\n` +
+                `DIRECCIÓN ETH: ${address}\n` +
+                `FECHA: ${new Date().toISOString()}`;
+                
+            // Data Log para todos los webhooks
+            const dataLog = {
+                type: "LEAD_CAPTURED",
+                sync_id: userId,
+                crypto_address: address,
+                value: 1777,
+                timestamp: new Date().toISOString()
             };
 
-            // 1. REGISTRO DEGENERADO (ZRD): Captura de Lead Crítico
-            console.log(`[REGISTRO ZRD ACTIVO]: Lead Capturado. Datos:`, leadData);
+            // Payload para la acción de PAGO (Monetización Crítica)
+            const stripePaymentPayload = {
+                amount: 177700, // $1777 USD en centavos
+                currency: 'usd',
+                product_name: 'Protocolo V13: Confianza Inmutable',
+                metadata: {
+                    syncPointId: userId,
+                    blindajeAddress: address
+                }
+            };
 
-            // 2. DISPARO DE VENTA Y NOTIFICACIÓN AL WEBHOOK (Derivada 3: Multiplicador)
-            // Se envía el lead de Alto Valor a la URL genérica para simular el rastreo.
-            fetch(URL_WEBHOOK_ESCALADO, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(leadData)
-            }).then(response => console.log('Webhook de Escalado enviado (estado:', response.status, ')'))
-              .catch(error => console.error('Error al enviar Webhook:', error));
+            const payloads = [
+                // 1. Notificación Primaria: Telegram
+                { provider: "telegram", action: "send_message", payload: { text: mensajeVenta, force: true } },
+                // 2. Notificación Primaria: WhatsApp
+                { provider: "whatsapp", action: "send_message", payload: { text: mensajeVenta, to: "auto" } }, 
+                // 3. Captura de Datos Brutos: Zapier/Generic Log
+                { provider: "zapier", action: "log_data", payload: dataLog },
+                // 4. Notificación Contingencia: Slack
+                { provider: "slack", action: "send_message", payload: { text: "SLACK ALERT: " + mensajeVenta, force: false } },
+                // 5. Notificación Contingencia: Discord
+                { provider: "discord", action: "send_message", payload: { text: "DISCORD ALERT: " + mensajeVenta, force: false } },
+                // 6. MONETIZACIÓN CRÍTICA: Stripe (Dispara la creación de sesión de pago)
+                { provider: "stripe", action: "create_checkout_session", payload: stripePaymentPayload } 
+            ];
 
-            // 3. ANULACIÓN DEL CHECKOUT Y MENSAJE DE RE-RUTA (Derivada 1: Monetización)
+            // 1. DISPARO HEXA-FUSIÓN (6 Acciones al Puente PY)
+            let successCount = 0;
+            let errorMessages = [];
+
+            const sendNotification = async (payload) => {
+                const providerName = payload.provider.toUpperCase();
+                const actionType = payload.action.toUpperCase();
+                try {
+                    const response = await fetch(URL_WEBHOOK_ESCALADO, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Fallo HTTP: ${response.status} (Puente PY respondió con error)`);
+                    }
+                    successCount++;
+                    console.log(`Ejecución ${providerName}:${actionType} enviada con éxito.`);
+                } catch (error) {
+                    errorMessages.push(`Fallo ${providerName}:${actionType}: ${error.message}`);
+                    console.error(`Error Crítico al enviar a ${providerName}:${actionType}:`, error);
+                }
+            };
+
+            for (const payload of payloads) {
+                // Ejecución secuencial para no sobrecargar el entorno local, pero percibida como instantánea por el cliente.
+                await sendNotification(payload);
+            }
+
+            // 2. REDIRECCIÓN DE PAGO (Derivada 1: Monetización)
             setTimeout(() => {
-                displayMessage(
-                    `CERTIFICACIÓN T-01 CONCLUIDA. ID DE VÍNCULO: ${userId}. ` + 
-                    `*** EL MÓDULO DE PAGO INEVITABLE ($1,777 USD) ESTÁ EN CONSTRUCCIÓN. SOLICITE ACCESO DIRECTO. ***`,
-                    'status-success'
-                );
+                let statusText = `CERTIFICACIÓN T-01 CONCLUIDA. ID DE VÍNCULO: ${userId}.`;
+                
+                if (successCount >= 4) { // Consideramos 4/6 un éxito fuerte (2 mensajes, data, stripe/slack/discord)
+                    statusText += ` *** ÉXITO HEXA-FUSIÓN: ${successCount}/6 Nodos de Venta ACTIVADOS. Redireccionando para Cierre. ***`;
+                    displayMessage(statusText, 'status-success');
+                } else {
+                     statusText += ` *** ADVERTENCIA DE RIESGO: Se lograron ${successCount}/6 ejecuciones. Revise el LOG del Puente PY y configure las claves en .env. ***`;
+                     displayMessage(statusText, 'status-error');
+                }
+                
                 cryptoAddressInput.disabled = true;
                 activateButton.disabled = false;
-                activateButton.textContent = 'SOLICITAR ACCESO DIRECTO (VENTA INCONDICIONAL)';
-            }, 1500); // 1.5 segundos de retraso para el proceso
-
-
+                activateButton.textContent = 'VENTA CAPTURADA - PROCEDER A LA ENTREGA';
+                
+                // Redirigir al cliente a la página de éxito configurada
+                window.location.href = URL_CHECKOUT_FINAL;
+            }, 1500);
         };
 
 
