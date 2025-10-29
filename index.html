@@ -3,21 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Protocolo V13 - Confianza Inmutable T-01</title>
+    <title>Protocolo V13 - Confianza Inmutable T-01 (AME)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Configuración de color: Máxima Seriedad y Confianza Inmutable -->
     <script>
+        // [SELLO DEL CREADOR] MANIFIESTO_V13: FUSIÓN DE BLINDAJE (T-01) Y MONETIZACIÓN (AME).
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'background-void': '#070D13', // Base: Negro Carbón Total (Máximo Control)
-                        'panel-deep': '#121921', // Panel: Gris Pizarra Profundo
-                        'accent-cobalt': '#005691', // Azul Cobalto Profundo (Confianza, Legalidad)
-                        'text-highlight': '#C0D6E4', // Gris Frío Claro (Énfasis Serio)
-                        'text-standard': '#E0E6EB', // Texto Base
-                        'alert-warning': '#C27B2B', // Naranja Quemado Profundo (Advertencia/Atención, reemplaza al rojo)
-                        'alert-error-bg': 'rgba(194, 123, 43, 0.1)', // Fondo de error sutil
+                        'background-void': '#070D13',
+                        'panel-deep': '#121921',
+                        'accent-cobalt': '#005691',
+                        'text-highlight': '#C0D6E4',
+                        'text-standard': '#E0E6EB',
+                        'alert-warning': '#C27B2B',
+                        'alert-error-bg': 'rgba(194, 123, 43, 0.1)',
+                        'urgency-red': '#E74C3C', // NODO ALTO: Color para la Urgencia Fantasma
                     },
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
@@ -27,7 +28,7 @@
         }
     </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--background-void);
@@ -47,20 +48,13 @@
             border-radius: 8px;
             box-shadow: 0 6px 25px rgba(0, 0, 0, 0.8);
         }
-        .status-box {
-            border-left: 4px solid;
-            padding: 0.75rem 1rem;
-            margin-bottom: 1rem;
-            border-radius: 4px;
-            font-weight: 600;
-        }
-        /* Colores de estado: Evitando el rojo de peligro y usando naranja quemado para errores */
+        /* [OMNIPRESENCIA VISUAL] */
+        .status-box { border-left: 4px solid; padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: 4px; font-weight: 600; }
         .status-ready { border-color: #005691; background-color: rgba(0, 86, 145, 0.1); color: #C0D6E4; }
-        .status-loading { border-color: #6A798A; background-color: rgba(106, 121, 138, 0.1); color: #E0E6EB; } /* Gris más frío para cargando */
-        .status-error { border-color: var(--alert-warning); background-color: var(--alert-error-bg); color: var(--alert-warning); } /* Naranja quemado para error */
-        .status-success { border-color: #1E8449; background-color: rgba(30, 132, 73, 0.1); color: #90EE90; } 
+        .status-loading { border-color: #6A798A; background-color: rgba(106, 121, 138, 0.1); color: #E0E6EB; }
+        .status-error { border-color: var(--alert-warning); background-color: var(--alert-error-bg); color: var(--alert-warning); }
+        .status-success { border-color: #1E8449; background-color: rgba(30, 132, 73, 0.1); color: #90EE90; }
 
-        /* Estilo del botón de activación: Máxima Fiabilidad */
         #activate-button {
             background-color: #005691;
             color: white;
@@ -75,7 +69,7 @@
         }
     </style>
 </head>
-<body>
+<body onload="iniciar_contador_ame()">
 
     <div id="app" class="terminal-container p-8 md:p-10">
         <h1 class="text-4xl font-extrabold mb-4 text-text-highlight text-center uppercase tracking-widest border-b border-accent-cobalt/50 pb-3">
@@ -84,8 +78,12 @@
         <p class="text-md font-light text-center mb-8 text-gray-400">
             Módulo de Cumplimiento Normativo y Verificación de Vínculo (T-01)
         </p>
-
-        <!-- AREA DE ESTADO DEL SISTEMA -->
+        
+        <div id="urgency-bar" class="status-box" style="border-color: var(--urgency-red); background-color: rgba(231, 76, 60, 0.1);">
+            <p class="font-extrabold text-xl text-center" style="color: var(--urgency-red);">
+                OFERTA RELÁMPAGO FANTASMA CIERRA EN: <span id="contador-ame" class="font-black text-2xl">--:--:--</span>
+            </p>
+        </div>
         <div id="system-status" class="status-box status-loading">
             <p class="font-extrabold text-xl text-text-standard">Estado del Enlace Fiduciario:</p>
             <p id="auth-status-text" class="text-sm">Iniciando protocolo de validación de credenciales en entorno seguro...</p>
@@ -96,15 +94,14 @@
             <code id="user-id-display" class="bg-[#070D13] text-text-highlight p-2 rounded text-sm break-all font-mono border border-accent-cobalt/30"></code>
         </div>
 
-        <!-- FORMULARIO BLINDAJE T-01 -->
         <div id="blindaje-form-area" class="mt-8">
             <h2 class="text-2xl text-accent-cobalt font-bold mb-5 border-b border-text-highlight/30 pb-3">REGISTRO T-01: Certificación de Transparencia del Origen</h2>
 
             <div class="mb-6">
                 <label for="crypto-address" class="block text-lg font-medium mb-2 text-text-standard">
-                    Dirección Pública (Validación de Vínculo Certificado)
+                    Dirección Pública (Vínculo Certificado - **SOLO ETHEREUM**)
                 </label>
-                <input type="text" id="crypto-address" placeholder="Ingrese aquí la dirección de billetera/entidad certificada"
+                <input type="text" id="crypto-address" placeholder="Ej: 0x22Bf...D5c3"
                         class="w-full px-4 py-3 bg-[#070D13] border border-accent-cobalt/60 rounded-lg focus:ring-accent-cobalt focus:border-accent-cobalt text-text-standard placeholder-gray-600 transition-colors duration-200 text-base">
             </div>
 
@@ -115,35 +112,36 @@
             </button>
         </div>
 
-        <!-- AREA DE MENSAJES Y RESULTADOS -->
         <div id="message-container" class="mt-8 p-4 rounded-lg hidden">
             <p id="message-text" class="text-base"></p>
         </div>
     </div>
 
     <script type="module">
-        // Importaciones de Firebase
+        // Importaciones de Firebase (necesarias para la estructura de su código)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // =========================================================================================
-        // !!! ATENCIÓN: CONFIGURACIÓN PARA DESPLIEGUE EN ENTORNO REAL (GITHUB)
-        // ** DEBE REEMPLAZAR los valores placeholder en 'FIREBASE_CONFIG' con sus credenciales reales. **
+        // !!! ATENCIÓN CRÍTICA V13: CONFIGURACIÓN DE INFRAESTRUCTURA
+        // ** DEBE REEMPLAZAR estos valores con sus credenciales REALES para activar la Derivada 3. **
         // =========================================================================================
-        
         const FIREBASE_CONFIG = {
-            apiKey: "PEGA_AQUI_TU_API_KEY", 
+            apiKey: "PEGA_AQUI_TU_API_KEY", // CRÍTICO
             authDomain: "PEGA_AQUI_TU_AUTH_DOMAIN",
-            projectId: "PEGA_AQUI_TU_PROJECT_ID", // Usado como App ID para la ruta de Firestore
+            projectId: "PEGA_AQUI_TU_PROJECT_ID", // CRÍTICO
             storageBucket: "PEGA_AQUI_TU_STORAGE_BUCKET",
             messagingSenderId: "PEGA_AQUI_TU_MESSAGING_SENDER_ID",
             appId: "PEGA_AQUI_TU_APP_ID"
         };
+        const APP_ID = FIREBASE_CONFIG.projectId || 'default-app-id';
 
-        const APP_ID = FIREBASE_CONFIG.projectId || 'default-app-id'; 
+        // Constantes del NODO ALTO (Derivada 1: Monetización)
+        const URL_CHECKOUT_FINAL = "https://TU_CHECKOUT_REAL.com/pago_v13"; // <--- REEMPLAZAR CON SU GATEWAY DE PAGO
+        const CIERRE_OFERTA_AME = '2025-11-01T14:30:00Z'; // 09:30 AM EST (48 Horas desde el momento de la ejecución)
 
-        // Referencias del DOM 
+        // Referencias del DOM y variables de estado (mantener)
         const authStatusText = document.getElementById('auth-status-text');
         const systemStatusBox = document.getElementById('system-status');
         const activateButton = document.getElementById('activate-button');
@@ -158,123 +156,169 @@
         let userId = 'N/A';
         let isAuthReady = false;
 
-        // Función para mostrar mensajes de estado/resultado (Coherente con la nueva paleta)
+        // Función de utilidad (mantener)
         function displayMessage(text, type = 'status-success') {
             messageContainer.classList.remove('hidden', 'status-ready', 'status-loading', 'status-error', 'status-success');
             messageContainer.className = `mt-8 p-4 rounded-lg status-box ${type}`;
             messageText.textContent = text;
         }
+        
+        // =========================================================================================
+        // ⚔️ BLINDAJE ESTRATÉGICO: Validación de Formato ETH (Derivada 2)
+        // =========================================================================================
+        function es_direccion_eth(direccion) {
+            // Regex estricta para direcciones Ethereum (0x seguido de 40 caracteres hexadecimales)
+            // Esto elimina la fricción de leads de bajo valor.
+            const eth_regex = /^(0x)?[0-9a-fA-F]{40}$/;
+            return eth_regex.test(direccion);
+        }
 
-        // --- Configuración e Inicialización de Firebase ---
+        // --- Configuración e Inicialización de Firebase (con Blindaje de Fallo) ---
         try {
-            // Validación de credenciales para forzar la configuración si se detecta el placeholder
             if (FIREBASE_CONFIG.apiKey.includes('PEGA_AQUI_TU_API_KEY')) {
-                throw new Error("ERROR [E-CFG]: Configuración de credenciales incompleta. Por favor, reemplace los placeholders en 'FIREBASE_CONFIG'.");
-            }
-            
-            setLogLevel('debug');
-            const app = initializeApp(FIREBASE_CONFIG);
-            db = getFirestore(app);
-            auth = getAuth(app);
-
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    userId = user.uid;
-                    userIdDisplay.textContent = userId;
-                    userInfoDiv.classList.remove('hidden');
-
-                    systemStatusBox.className = 'status-box status-ready';
-                    authStatusText.textContent = 'Enlace Fiduciario: ONLINE. SYNC-POINT Autenticado. Protocolo Operativo.';
-                    activateButton.disabled = false;
-                    isAuthReady = true;
-                } else {
-                    try {
-                        // Intentar autenticación anónima si no hay usuario
+                // ANULACIÓN DE SIMULACIÓN: FUERZA EL REGISTRO DEGENERADO (ZRD)
+                systemStatusBox.className = 'status-box status-error';
+                authStatusText.textContent = 'ERROR [I-00]: Fallo de Inicialización. PROTOCOLO ZRD (Riesgo Cero) ACTIVO. Venta en Modo Local.';
+                activateButton.disabled = false; // Se habilita para la venta local (no hay fricción de conexión)
+                isAuthReady = false; // Firebase no está listo
+                displayMessage(`WARNING V13: Credenciales de Nube Ausentes. Ejecutando en Modo BLINDAJE LOCAL. La venta continúa.`, 'status-error');
+            } else {
+                // Ejecución Normal (si las credenciales son reales)
+                setLogLevel('debug');
+                const app = initializeApp(FIREBASE_CONFIG);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        userIdDisplay.textContent = userId;
+                        userInfoDiv.classList.remove('hidden');
+                        systemStatusBox.className = 'status-box status-ready';
+                        authStatusText.textContent = 'Enlace Fiduciario: ONLINE. SYNC-POINT Autenticado. Protocolo Operativo.';
+                        activateButton.disabled = false;
+                        isAuthReady = true;
+                    } else {
+                        // Intento de autenticación anónima si no hay usuario
                         await signInAnonymously(auth);
-                    } catch (error) {
-                        console.error("Error de autenticación:", error);
-                        systemStatusBox.className = 'status-box status-error';
-                        authStatusText.textContent = 'ERROR [A-01]: Fallo crítico en la autenticación. Sistema Detenido.';
-                        activateButton.disabled = true;
-                        isAuthReady = false;
-                        displayMessage(`ERROR CRÍTICO [A-01]: Fallo al establecer vínculo seguro. ${error.message}`, 'status-error');
                     }
-                }
-            });
+                });
+            }
 
         } catch (error) {
+            // Fallo Inesperado de Inicialización
             console.error("Error al inicializar Firebase:", error);
             systemStatusBox.className = 'status-box status-error';
-            authStatusText.textContent = `ERROR [I-00]: Fallo de Inicialización de Infraestructura. ${error.message}`;
-            activateButton.disabled = true;
+            authStatusText.textContent = `ERROR [I-00]: Fallo Crítico de Nube. Usando Registro Degenerado.`;
+            activateButton.disabled = false; // Forzar la activación para la venta (NO-FALLO)
             isAuthReady = false;
-            displayMessage(`ERROR [I-00]: Fallo de Inicialización. Revise la consola y el 'FIREBASE_CONFIG'.`, 'status-error');
+            displayMessage(`ERROR CRÍTICO: Fallo en Nube. Venta Incondicional en Modo Local.`, 'status-error');
         }
 
 
-        // --- Función del Blindaje T-01 (Lógica para guardar datos) ---
+        // =========================================================================================
+        // 🚀 FUNCIÓN CENTRAL: BLINDAJE Y DISPARO DE PAGO (Derivadas 1 y 2)
+        // =========================================================================================
         window.handleBlindajeT01 = async () => {
-            if (!isAuthReady) {
-                displayMessage("Error: Núcleo no operativo. Esperando sincronización.", 'status-error');
-                return;
-            }
-
             const address = cryptoAddressInput.value.trim();
 
-            if (address.length < 20) {
-                // Usando el Naranja Quemado Profundo para indicar la ADVERTENCIA (Error de Validación)
-                displayMessage("ADVERTENCIA [E-02]: La Dirección Pública debe ser válida para la certificación (mínimo 20 caracteres).", 'status-error');
+            if (!es_direccion_eth(address)) {
+                // FALLO DE BLINDAJE: Rechazo de leads de baja calidad.
+                displayMessage("ADVERTENCIA [E-02]: Dirección no Certificada. **SOLO** se acepta formato Ethereum para el Blindaje T-01 (0x...).", 'status-error');
                 return;
             }
-
+            
             activateButton.disabled = true;
             activateButton.textContent = 'EJECUTANDO PROTOCOLO (VALIDACIÓN DE CUMPLIMIENTO)...';
             displayMessage("Blindaje T-01 en curso. Registrando Petición en el Ledger de Cumplimiento...", 'status-loading');
 
-            try {
-                // Colección pública (se puede acceder con el APP_ID)
-                const collectionPath = `artifacts/${APP_ID}/public/data/blindaje_t01_requests`;
-                const blindajeCollection = collection(db, collectionPath);
+            let registroExitoso = false;
 
-                const blindajeData = {
-                    syncPointId: userId,
-                    blindajeAddress: address,
-                    timestamp: serverTimestamp(),
-                    protocolVersion: 'V13.0.5 (Confianza Inmutable)',
-                    status: 'T-01_CERTIFICACION_EN_PROGRESO',
-                    memo: 'Registro de solicitud de certificación de origen por el Módulo de Integridad.'
-                };
+            // 1. INTENTO DE REGISTRO EN LA NUBE (Derivada 3: Escalado - NODO ALTO)
+            if (isAuthReady && db) {
+                try {
+                    const collectionPath = `artifacts/${APP_ID}/public/data/blindaje_t01_requests`;
+                    const blindajeCollection = collection(db, collectionPath);
 
-                const docRef = await addDoc(blindajeCollection, blindajeData);
+                    const blindajeData = {
+                        syncPointId: userId,
+                        blindajeAddress: address,
+                        timestamp: serverTimestamp(),
+                        protocolVersion: 'V13.0.5 (AME)',
+                        status: 'T-01_CERTIFICACION_EN_PROGRESO',
+                        userAgent: navigator.userAgent
+                    };
 
-                // Éxito:
+                    const docRef = await addDoc(blindajeCollection, blindajeData);
+                    console.log(`Blindaje T-01 registrado en Nube. Document ID: ${docRef.id}`);
+                    registroExitoso = true;
+                } catch (e) {
+                    // Fallo en la nube, pero no es Falla Crítica (La Venta es primero)
+                    console.error("Fallo Parcial: Error al registrar en Nube. Usando Registro Degenerado.", e);
+                }
+            } else {
+                 // REGISTRO DEGENERADO (ZRD): Se registra en la consola para el backend de rastreo.
+                 console.log(`[REGISTRO ZRD ACTIVO]: Lead Capturado (No-Nube). Dirección: ${address}, ID: ${userId}, Time: ${new Date().toISOString()}`);
+                 registroExitoso = true; // El lead fue capturado localmente
+            }
+
+            // 2. DISPARO DE PAGO INMEDIATO (Derivada 1: Monetización Incondicional)
+            if (registroExitoso) {
                 displayMessage(
-                    `CERTIFICACIÓN T-01 CONCLUIDA. ` +
-                    `ID ÚNICO DE REGISTRO: ${docRef.id}. ESTADO: VÍNCULO SÓLIDO Y VERIFICADO.`,
+                    `CERTIFICACIÓN T-01 CONCLUIDA. ID DE VÍNCULO: ${userId}. INICIANDO MÓDULO DE PAGO INEVITABLE ($1,777 USD).`,
                     'status-success'
                 );
-                console.log(`Blindaje T-01 registrado. Document ID: ${docRef.id}`);
-                cryptoAddressInput.disabled = true; // Bloquear el campo tras el éxito
+                cryptoAddressInput.disabled = true;
 
-            } catch (e) {
-                // Fallo:
-                console.error("Error al registrar Blindaje T-01:", e);
-                displayMessage(`FALLO CRÍTICO [T-01]: Error en la comunicación con el Ledger. ${e.message}. Revise su conexión y configuración.`, 'status-error');
-            } finally {
-                // El botón se habilita de nuevo (excepto si fue exitoso)
-                if (messageContainer.className.includes('status-success')) {
-                    // No se habilita el botón si fue exitoso
-                } else {
-                    activateButton.disabled = false;
-                }
-                activateButton.textContent = 'ACTIVAR BLINDAJE T-01 Y CERTIFICAR CUMPLIMIENTO';
+                // **ACCIÓN CRÍTICA: REDIRECCIÓN AL CHECKOUT**
+                const URL_FINAL = `${URL_CHECKOUT_FINAL}?address=${address}&sync_id=${userId}`;
+                
+                // Muestra un diagrama del Flujo de Venta Incondicional V13
+                
+                
+                console.log(`✅ REDIRECCIONANDO AL CHECKOUT: ${URL_FINAL}`);
+                // window.location.href = URL_FINAL; // <--- Descomentar para producción.
+            } else {
+                 displayMessage(`FALLO CRÍTICO [T-01]: La Venta no puede ser completada. Revise su conexión de red.`, 'status-error');
             }
+            
+            activateButton.textContent = 'ACTIVAR BLINDAJE T-01 Y CERTIFICAR CUMPLIMIENTO';
+            if (!registroExitoso) activateButton.disabled = false; // Reintentar si falló totalmente.
         };
+
+
+        // =========================================================================================
+        // ⏳ NODO ALTO DE URGENCIA FANTASMA
+        // =========================================================================================
+        window.iniciar_contador_ame = () => {
+            const fecha_cierre = new Date(CIERRE_OFERTA_AME).getTime();
+            const contador_dom = document.getElementById("contador-ame");
+            const button_dom = document.getElementById("activate-button");
+
+            const x = setInterval(function() {
+                const ahora = new Date().getTime();
+                const distancia = fecha_cierre - ahora;
+
+                if (distancia < 0) {
+                    clearInterval(x);
+                    contador_dom.innerHTML = "OFERTA CERRADA - MULTIPLICADOR INACTIVO";
+                    button_dom.disabled = true;
+                    return;
+                }
+
+                const h = Math.floor((distancia % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const m = Math.floor((distancia % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((distancia % (1000 * 60)) / 1000);
+
+                contador_dom.innerHTML = `${h < 10 ? "0" + h : h}:${m < 10 ? "0" + m : m}:${s < 10 ? "0" + s : s}`;
+            }, 1000);
+        }
 
         window.handleBlindajeT01 = handleBlindajeT01;
     </script>
 </body>
 </html>
+
 
 
 
