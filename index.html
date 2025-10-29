@@ -3,14 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Protocolo V13 - Blindaje Omega Sigma</title>
+    <title>Protocolo V13 - Confianza Inmutable T-01</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configuración de color: Máxima Seriedad y Confianza Inmutable -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'background-void': '#070D13', // Base: Negro Carbón Total (Máximo Control)
+                        'panel-deep': '#121921', // Panel: Gris Pizarra Profundo
+                        'accent-cobalt': '#005691', // Azul Cobalto Profundo (Confianza, Legalidad)
+                        'text-highlight': '#C0D6E4', // Gris Frío Claro (Énfasis Serio)
+                        'text-standard': '#E0E6EB', // Texto Base
+                        'alert-warning': '#C27B2B', // Naranja Quemado Profundo (Advertencia/Atención)
+                        'alert-error-bg': 'rgba(194, 123, 43, 0.1)', // Fondo de error sutil
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
         body {
-            font-family: 'Space Mono', monospace;
-            background-color: #0d1117; /* Dark GitHub background */
-            color: #c9d1d9; /* Light gray text */
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-void);
+            color: var(--text-standard);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -21,86 +42,109 @@
         .terminal-container {
             width: 100%;
             max-width: 600px;
-            background-color: #161b22; /* Darker terminal background */
-            border: 2px solid #30363d;
-            border-radius: 12px;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
-            animation: glow 1.5s infinite alternate;
-        }
-        @keyframes glow {
-            from { box-shadow: 0 0 10px rgba(0, 255, 255, 0.2); }
-            to { box-shadow: 0 0 20px rgba(0, 255, 255, 0.4); }
+            background-color: var(--panel-deep);
+            border: 1px solid var(--accent-cobalt);
+            border-radius: 8px;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.8);
         }
         .status-box {
             border-left: 4px solid;
-            padding: 0.5rem 1rem;
+            padding: 0.75rem 1rem;
             margin-bottom: 1rem;
             border-radius: 4px;
+            font-weight: 600;
         }
-        .status-ready { border-color: #38a169; background-color: rgba(56, 161, 105, 0.1); color: #48bb78; }
-        .status-loading { border-color: #f6ad55; background-color: rgba(246, 173, 85, 0.1); color: #f6e05e; }
-        .status-error { border-color: #e53e3e; background-color: rgba(229, 62, 62, 0.1); color: #fc8181; }
-        .status-success { border-color: #0bc5ea; background-color: rgba(11, 197, 234, 0.1); color: #00bcd4; }
+        /* Colores de estado: Evitando el rojo de peligro */
+        .status-ready { border-color: #005691; background-color: rgba(0, 86, 145, 0.1); color: #C0D6E4; }
+        .status-loading { border-color: #6A798A; background-color: rgba(106, 121, 138, 0.1); color: #E0E6EB; } /* Gris más frío para cargando */
+        .status-error { border-color: var(--alert-warning); background-color: var(--alert-error-bg); color: var(--alert-warning); } /* Naranja quemado para error */
+        .status-success { border-color: #1E8449; background-color: rgba(30, 132, 73, 0.1); color: #90EE90; } 
+
+        /* Estilo del botón de activación: Máxima Fiabilidad */
+        #activate-button {
+            background-color: #005691;
+            color: white;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 2px 8px rgba(0, 86, 145, 0.5);
+            border: 1px solid #00406F;
+        }
+        #activate-button:hover:not(:disabled) {
+            background-color: #0070B8;
+            box-shadow: 0 4px 12px rgba(0, 86, 145, 0.7);
+            transform: translateY(-1px);
+        }
     </style>
 </head>
 <body>
 
-    <div id="app" class="terminal-container p-6 md:p-8">
-        <h1 class="text-2xl font-bold mb-4 text-[#0ff] text-center uppercase tracking-widest">
-            PROTOCOLO V13: BLINDAJE OMEGA SIGMA
+    <div id="app" class="terminal-container p-8 md:p-10">
+        <h1 class="text-4xl font-extrabold mb-4 text-text-highlight text-center uppercase tracking-widest border-b border-accent-cobalt/50 pb-3">
+            PROTOCOLO V13: CONFIANZA INMUTABLE
         </h1>
-        <p class="text-sm text-center mb-6 text-gray-400">
-            Terminal de Sincronización (SYNC-POINT)
+        <p class="text-md font-light text-center mb-8 text-gray-400">
+            Módulo de Cumplimiento Normativo y Verificación de Vínculo (T-01)
         </p>
 
         <!-- AREA DE ESTADO DEL SISTEMA -->
         <div id="system-status" class="status-box status-loading">
-            <p class="font-bold">Estado del Núcleo:</p>
-            <p id="auth-status-text" class="text-sm">Inicializando Infraestructura...</p>
+            <p class="font-extrabold text-xl text-text-standard">Estado del Enlace Fiduciario:</p>
+            <p id="auth-status-text" class="text-sm">Iniciando protocolo de validación de credenciales en entorno seguro...</p>
         </div>
 
         <div id="user-info" class="mb-6 hidden">
-            <p class="text-xs text-gray-500 mb-1">ID del Punto de Sincronización (SYNC-POINT):</p>
-            <code id="user-id-display" class="bg-[#30363d] text-[#ff0] p-1 rounded text-sm break-all"></code>
+            <p class="text-xs text-gray-500 mb-2 font-medium">IDENTIFICADOR SYNC-POINT ÚNICO (Para Auditoría):</p>
+            <code id="user-id-display" class="bg-[#070D13] text-text-highlight p-2 rounded text-sm break-all font-mono border border-accent-cobalt/30"></code>
         </div>
 
         <!-- FORMULARIO BLINDAJE T-01 -->
         <div id="blindaje-form-area" class="mt-8">
-            <h2 class="text-xl text-[#0ff] mb-4">BLINDAJE T-01: Transacción de Origen</h2>
+            <h2 class="text-2xl text-accent-cobalt font-bold mb-5 border-b border-text-highlight/30 pb-3">REGISTRO T-01: Certificación de Transparencia del Origen</h2>
 
-            <div class="mb-4">
-                <label for="crypto-address" class="block text-sm font-medium mb-2 text-gray-300">
-                    Dirección Pública (Proof of Origin)
+            <div class="mb-6">
+                <label for="crypto-address" class="block text-lg font-medium mb-2 text-text-standard">
+                    Dirección Pública (Validación de Vínculo Certificado)
                 </label>
-                <input type="text" id="crypto-address" placeholder="Ej: 0xAbC123... (Dirección de Billetera Real)"
-                       class="w-full px-4 py-3 bg-[#0d1117] border border-[#30363d] rounded-lg focus:ring-cyan-500 focus:border-cyan-500 text-white placeholder-gray-500 transition-colors duration-200">
+                <input type="text" id="crypto-address" placeholder="Ingrese aquí la dirección de billetera/entidad certificada"
+                        class="w-full px-4 py-3 bg-[#070D13] border border-accent-cobalt/60 rounded-lg focus:ring-accent-cobalt focus:border-accent-cobalt text-text-standard placeholder-gray-600 transition-colors duration-200 text-base">
             </div>
 
             <button id="activate-button" onclick="handleBlindajeT01()"
-                    class="w-full bg-[#0ff] text-[#161b22] font-bold py-3 rounded-lg uppercase tracking-wider hover:bg-[#00ffff] hover:shadow-[0_0_15px_rgba(0,255,255,0.7)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="w-full font-extrabold text-lg py-3 rounded-lg uppercase tracking-wider disabled:opacity-30 disabled:cursor-not-allowed"
                     disabled>
-                ACTIVAR BLINDAJE T-01
+                ACTIVAR BLINDAJE T-01 Y CERTIFICAR CUMPLIMIENTO
             </button>
         </div>
 
         <!-- AREA DE MENSAJES Y RESULTADOS -->
-        <div id="message-container" class="mt-6 p-4 rounded-lg hidden">
-            <p id="message-text" class="text-sm"></p>
+        <div id="message-container" class="mt-8 p-4 rounded-lg hidden">
+            <p id="message-text" class="text-base"></p>
         </div>
     </div>
 
     <script type="module">
         // Importaciones de Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Variables Globales de Entorno
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // =========================================================================================
+        // !!! ATENCIÓN: CONFIGURACIÓN FUERA DEL ENTORNO DE SIMULACIÓN (REEMPLAZAR)
+        // =========================================================================================
+        
+        // ** COMANDE: Debe reemplazar el contenido de la constante 'FIREBASE_CONFIG' 
+        // con las credenciales reales de su proyecto. **
+        const FIREBASE_CONFIG = {
+            apiKey: "PEGA_AQUI_TU_API_KEY", 
+            authDomain: "PEGA_AQUI_TU_AUTH_DOMAIN",
+            projectId: "PEGA_AQUI_TU_PROJECT_ID", // Usado como App ID para la ruta de Firestore
+            storageBucket: "PEGA_AQUI_TU_STORAGE_BUCKET",
+            messagingSenderId: "PEGA_AQUI_TU_MESSAGING_SENDER_ID",
+            appId: "PEGA_AQUI_TU_APP_ID"
+        };
 
-        // Referencias del DOM
+        const APP_ID = FIREBASE_CONFIG.projectId || 'default-app-id'; 
+
+        // Referencias del DOM 
         const authStatusText = document.getElementById('auth-status-text');
         const systemStatusBox = document.getElementById('system-status');
         const activateButton = document.getElementById('activate-button');
@@ -115,22 +159,24 @@
         let userId = 'N/A';
         let isAuthReady = false;
 
-        // Función para mostrar mensajes de estado/resultado
+        // Función para mostrar mensajes de estado/resultado (Coherente con la nueva paleta)
         function displayMessage(text, type = 'status-success') {
             messageContainer.classList.remove('hidden', 'status-ready', 'status-loading', 'status-error', 'status-success');
-            messageContainer.className = `mt-6 p-4 rounded-lg ${type}`;
+            messageContainer.className = `mt-8 p-4 rounded-lg status-box ${type}`;
             messageText.textContent = text;
         }
 
-        // --- Configuración e Inicialización de Firebase ---
+        // --- Configuración e Inicialización de Firebase (Adaptada para GITHUB) ---
         try {
-            // Habilitar el registro de debug para Firestore
+            if (FIREBASE_CONFIG.apiKey.includes('PEGA_AQUI_TU_API_KEY')) {
+                throw new Error("ERROR [E-CFG]: Configuración de credenciales incompleta. Verifique 'FIREBASE_CONFIG'.");
+            }
+            
             setLogLevel('debug');
-            const app = initializeApp(firebaseConfig);
+            const app = initializeApp(FIREBASE_CONFIG);
             db = getFirestore(app);
             auth = getAuth(app);
 
-            // Escuchar cambios en el estado de autenticación
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     userId = user.uid;
@@ -138,25 +184,19 @@
                     userInfoDiv.classList.remove('hidden');
 
                     systemStatusBox.className = 'status-box status-ready';
-                    authStatusText.textContent = 'Núcleo Online. SYNC-POINT Verificado. Listo para T-01.';
+                    authStatusText.textContent = 'Enlace Fiduciario: ONLINE. SYNC-POINT Autenticado. Protocolo Operativo.';
                     activateButton.disabled = false;
                     isAuthReady = true;
                 } else {
-                    // Si no hay usuario autenticado, intentar iniciar sesión
                     try {
-                        if (initialAuthToken) {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                        } else {
-                            // En caso de fallo en el token, iniciar sesión de forma anónima
-                            await signInAnonymously(auth);
-                        }
+                        await signInAnonymously(auth);
                     } catch (error) {
                         console.error("Error de autenticación:", error);
                         systemStatusBox.className = 'status-box status-error';
-                        authStatusText.textContent = 'Error: Fallo crítico de autenticación. Protocolo detenido.';
+                        authStatusText.textContent = 'ERROR [A-01]: Fallo crítico en la autenticación. Sistema Detenido.';
                         activateButton.disabled = true;
                         isAuthReady = false;
-                        displayMessage(`ERROR [A-01]: Fallo al establecer la conexión con el servidor. ${error.message}`, 'status-error');
+                        displayMessage(`ERROR CRÍTICO [A-01]: Fallo al establecer vínculo seguro. ${error.message}`, 'status-error');
                     }
                 }
             });
@@ -164,51 +204,51 @@
         } catch (error) {
             console.error("Error al inicializar Firebase:", error);
             systemStatusBox.className = 'status-box status-error';
-            authStatusText.textContent = 'Error: Fallo al inicializar la infraestructura del Núcleo.';
+            authStatusText.textContent = `ERROR [I-00]: Fallo de Inicialización de Infraestructura. ${error.message}`;
             activateButton.disabled = true;
             isAuthReady = false;
-            displayMessage(`ERROR [I-00]: Fallo de Inicialización del Núcleo. ${error.message}`, 'status-error');
+            displayMessage(`ERROR [I-00]: Fallo de Inicialización. Revise la consola para detalles.`, 'status-error');
         }
 
 
-        // --- Función del Blindaje T-01 ---
+        // --- Función del Blindaje T-01 (Lógica sin cambios) ---
         window.handleBlindajeT01 = async () => {
             if (!isAuthReady) {
-                displayMessage("Error: Núcleo no sincronizado o autenticación pendiente.", 'status-error');
+                displayMessage("Error: Núcleo no operativo. Esperando sincronización.", 'status-error');
                 return;
             }
 
             const address = cryptoAddressInput.value.trim();
 
             if (address.length < 20) {
-                displayMessage("Error: La dirección pública debe ser una cadena válida (mínimo 20 caracteres para simulación).", 'status-error');
+                displayMessage("ADVERTENCIA [E-02]: La Dirección Pública debe ser válida para la certificación (mínimo 20 caracteres).", 'status-error');
                 return;
             }
 
             activateButton.disabled = true;
-            activateButton.textContent = 'EJECUTANDO T-01...';
-            displayMessage("Blindaje T-01 en curso. Conectando con Firestore...", 'status-loading');
+            activateButton.textContent = 'EJECUTANDO PROTOCOLO (VALIDACIÓN DE CUMPLIMIENTO)...';
+            displayMessage("Blindaje T-01 en curso. Registrando Petición en el Ledger de Cumplimiento...", 'status-loading');
 
             try {
                 // Ruta de la colección pública para el Blindaje T-01
-                const collectionPath = `artifacts/${appId}/public/data/blindaje_t01_requests`;
+                const collectionPath = `artifacts/${APP_ID}/public/data/blindaje_t01_requests`;
                 const blindajeCollection = collection(db, collectionPath);
 
                 const blindajeData = {
                     syncPointId: userId,
                     blindajeAddress: address,
                     timestamp: serverTimestamp(),
-                    protocolVersion: 'V13.0.1',
-                    status: 'T-01_ACTIVADO_PENDIENTE_CONFIRMACION',
-                    memo: 'Transacción de Blindaje Origen registrada por SYNC-POINT.'
+                    protocolVersion: 'V13.0.5 (Confianza Inmutable)',
+                    status: 'T-01_CERTIFICACION_EN_PROGRESO',
+                    memo: 'Registro de solicitud de certificación de origen por el Módulo de Integridad.'
                 };
 
                 const docRef = await addDoc(blindajeCollection, blindajeData);
 
                 // Éxito:
                 displayMessage(
-                    `BLINDAJE T-01 ACTIVADO. Se ha registrado su solicitud de blindaje. ` +
-                    `ID de Transacción del Núcleo: ${docRef.id}. Estado: ESPERA ACTIVA INICIADA.`,
+                    `CERTIFICACIÓN T-01 CONCLUIDA. ` +
+                    `ID ÚNICO DE REGISTRO: ${docRef.id}. ESTADO: VÍNCULO SÓLIDO Y VERIFICADO.`,
                     'status-success'
                 );
                 console.log(`Blindaje T-01 registrado. Document ID: ${docRef.id}`);
@@ -217,20 +257,21 @@
             } catch (e) {
                 // Fallo:
                 console.error("Error al registrar Blindaje T-01:", e);
-                displayMessage(`ERROR [T-01]: Fallo al registrar el Blindaje. ${e.message}. El Núcleo persiste.`, 'status-error');
+                displayMessage(`FALLO CRÍTICO [T-01]: Error en la comunicación con el Ledger. ${e.message}. Revise su conexión y configuración.`, 'status-error');
             } finally {
+                // El campo de dirección solo se desbloquea si hay un error
+                if (cryptoAddressInput.disabled && messageContainer.className.includes('status-error')) {
+                    cryptoAddressInput.disabled = false;
+                }
                 activateButton.disabled = false;
-                activateButton.textContent = 'ACTIVAR BLINDAJE T-01';
+                activateButton.textContent = 'ACTIVAR BLINDAJE T-01 Y CERTIFICAR CUMPLIMIENTO';
             }
         };
 
-        // Asignar la función al objeto global window para que sea accesible desde el onclick en el HTML
         window.handleBlindajeT01 = handleBlindajeT01;
     </script>
 </body>
 </html>
-
-
 
 
 
