@@ -119,7 +119,7 @@
 
     <script type="module">
         // =========================================================================================
-        // ⚔️ NÚCLEO INMUTABLE V13.1.0 - FUSIÓN HEXA-QUÁNTICA (6 ACCIONES SIMULTÁNEAS)
+        // ⚔️ NÚCLEO INMUTABLE V13.1.1 - FUSIÓN HEXA-QUÁNTICA (SECUENCIA DE COBALTO)
         // =========================================================================================
         
         // Simulación de los imports para evitar errores en entornos sin servidor (Modo ZRD)
@@ -138,8 +138,8 @@
 
 
         // Constantes del NODO ALTO (Derivadas 1 y 3)
-        // ** URL DE ÉXITO FINAL (Redirección de Pago Anulado) **
-        const URL_CHECKOUT_FINAL = "https://jorgeluis.vercel.app/gracias"; // DESTINO TRAS EJECUCIÓN
+        // ** URL DE ÉXITO FINAL (Solo se usa como fallback o referencia, la principal es la de Stripe) **
+        const URL_CHECKOUT_FALLBACK = "https://jorgeluis.vercel.app/gracias"; 
         
         // ** WEBHOOK REAL: APUNTA A SU PUENTE LOCAL (puente_full.py) en el puerto 8001 **
         const URL_WEBHOOK_ESCALADO = "http://127.0.0.1:8001/ejecutar"; // ENLACE INELUDIBLE
@@ -185,7 +185,7 @@
 
 
         // =========================================================================================
-        // 🚀 FUNCIÓN CENTRAL V13.1.0: FUSIÓN HEXA-QUÁNTICA
+        // 🚀 FUNCIÓN CENTRAL V13.1.1: FUSIÓN HEXA-QUÁNTICA (SECUENCIA DE COBALTO)
         // =========================================================================================
         window.handleBlindajeT01 = async () => {
             const address = cryptoAddressInput.value.trim();
@@ -196,104 +196,110 @@
             }
 
             activateButton.disabled = true;
-            activateButton.textContent = 'EJECUTANDO PROTOCOLO (HEXA-FUSIÓN: 6 Nodos de Venta)...';
-            displayMessage("Blindaje T-01 en curso. Disparando Ejecución Cuántica Múltiple...", 'status-loading');
+            activateButton.textContent = 'EJECUTANDO PROTOCOLO (SECUENCIA DE COBALTO: PRIORIDAD PAGO)...';
+            displayMessage("Blindaje T-01 en curso. Iniciando Creación de Sesión de Pago Crítica...", 'status-loading');
 
+            const leadMetadata = {
+                syncPointId: userId,
+                blindajeAddress: address
+            };
+            
             const mensajeVenta = 
-                `🔥 [VENTA CRÍTICA $1,777 USD - ALFA V13.1.0] 🔥\n` +
+                `🔥 [VENTA CRÍTICA $1,777 USD - ALFA V13.1.1] 🔥\n` +
                 `NUEVO LEAD CAPTURADO Y BLINDADO.\n` +
                 `ID VÍNCULO: ${userId}\n` +
                 `DIRECCIÓN ETH: ${address}\n` +
                 `FECHA: ${new Date().toISOString()}`;
-                
-            // Data Log para todos los webhooks
-            const dataLog = {
-                type: "LEAD_CAPTURED",
-                sync_id: userId,
-                crypto_address: address,
-                value: 1777,
-                timestamp: new Date().toISOString()
-            };
 
-            // Payload para la acción de PAGO (Monetización Crítica)
             const stripePaymentPayload = {
-                amount: 177700, // $1777 USD en centavos
-                currency: 'usd',
-                product_name: 'Protocolo V13: Confianza Inmutable',
-                metadata: {
-                    syncPointId: userId,
-                    blindajeAddress: address
+                provider: "stripe", 
+                action: "create_checkout_session", 
+                payload: {
+                    amount: 177700, // $1777 USD en centavos
+                    currency: 'usd',
+                    product_name: 'Protocolo V13: Confianza Inmutable',
+                    metadata: leadMetadata,
                 }
             };
+            
+            // --- 1. ACCIÓN CRÍTICA SINCRÓNICA: CREACIÓN DE PAGO STRIPE ---
+            let stripe_response_data;
+            try {
+                const response = await fetch(URL_WEBHOOK_ESCALADO, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(stripePaymentPayload)
+                });
 
-            const payloads = [
-                // 1. Notificación Primaria: Telegram
-                { provider: "telegram", action: "send_message", payload: { text: mensajeVenta, force: true } },
-                // 2. Notificación Primaria: WhatsApp
-                { provider: "whatsapp", action: "send_message", payload: { text: mensajeVenta, to: "auto" } }, 
-                // 3. Captura de Datos Brutos: Zapier/Generic Log
-                { provider: "zapier", action: "log_data", payload: dataLog },
-                // 4. Notificación Contingencia: Slack
-                { provider: "slack", action: "send_message", payload: { text: "SLACK ALERT: " + mensajeVenta, force: false } },
-                // 5. Notificación Contingencia: Discord
-                { provider: "discord", action: "send_message", payload: { text: "DISCORD ALERT: " + mensajeVenta, force: false } },
-                // 6. MONETIZACIÓN CRÍTICA: Stripe (Dispara la creación de sesión de pago)
-                { provider: "stripe", action: "create_checkout_session", payload: stripePaymentPayload } 
-            ];
-
-            // 1. DISPARO HEXA-FUSIÓN (6 Acciones al Puente PY)
-            let successCount = 0;
-            let errorMessages = [];
-
-            const sendNotification = async (payload) => {
-                const providerName = payload.provider.toUpperCase();
-                const actionType = payload.action.toUpperCase();
-                try {
-                    const response = await fetch(URL_WEBHOOK_ESCALADO, {
+                if (!response.ok) {
+                    throw new Error(`Fallo HTTP: ${response.status}. Revise el log del Puente PY.`);
+                }
+                
+                stripe_response_data = await response.json();
+                
+                if (stripe_response_data.status !== "success" || !stripe_response_data.checkout_url) {
+                    throw new Error(stripe_response_data.message || "Fallo Stripe: URL de Checkout no recibida. Clave STRIPE_API_KEY incorrecta.");
+                }
+                
+                const checkoutUrl = stripe_response_data.checkout_url;
+                
+                // --- 2. ACCIONES ASÍNCRONAS: BLINDAJE DE NOTIFICACIONES ---
+                displayMessage("¡ÉXITO CRÍTICO! Sesión de Pago Creada. Blindando Notificaciones...", 'status-success');
+                activateButton.textContent = 'REDIRECCIONANDO A PAGO INELUDIBLE...';
+                
+                const dataLog = {
+                    type: "LEAD_CAPTURED",
+                    sync_id: userId,
+                    crypto_address: address,
+                    value: 1777,
+                    timestamp: new Date().toISOString()
+                };
+                
+                const secondaryPayloads = [
+                    // Notificaciones Primarias
+                    { provider: "telegram", action: "send_message", payload: { text: mensajeVenta, force: true } },
+                    { provider: "whatsapp", action: "send_message", payload: { text: mensajeVenta, to: "auto" } }, 
+                    // Log de Datos Brutos
+                    { provider: "zapier", action: "log_data", payload: dataLog },
+                    // Notificaciones de Contingencia (Se ejecutan pero no afectan el flujo principal)
+                    { provider: "slack", action: "send_message", payload: { text: "SLACK ALERT: " + mensajeVenta, force: false } },
+                    { provider: "discord", action: "send_message", payload: { text: "DISCORD ALERT: " + mensajeVenta, force: false } },
+                ];
+                
+                // Disparar notificaciones en segundo plano (no esperamos respuesta)
+                secondaryPayloads.forEach(payload => {
+                    fetch(URL_WEBHOOK_ESCALADO, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`Fallo HTTP: ${response.status} (Puente PY respondió con error)`);
-                    }
-                    successCount++;
-                    console.log(`Ejecución ${providerName}:${actionType} enviada con éxito.`);
-                } catch (error) {
-                    errorMessages.push(`Fallo ${providerName}:${actionType}: ${error.message}`);
-                    console.error(`Error Crítico al enviar a ${providerName}:${actionType}:`, error);
-                }
-            };
-
-            for (const payload of payloads) {
-                // Ejecución secuencial para no sobrecargar el entorno local, pero percibida como instantánea por el cliente.
-                await sendNotification(payload);
-            }
-
-            // 2. REDIRECCIÓN DE PAGO (Derivada 1: Monetización)
-            setTimeout(() => {
-                let statusText = `CERTIFICACIÓN T-01 CONCLUIDA. ID DE VÍNCULO: ${userId}.`;
+                    }).catch(error => console.error(`Error asíncrono en ${payload.provider}:`, error));
+                });
                 
-                if (successCount >= 4) { // Consideramos 4/6 un éxito fuerte (2 mensajes, data, stripe/slack/discord)
-                    statusText += ` *** ÉXITO HEXA-FUSIÓN: ${successCount}/6 Nodos de Venta ACTIVADOS. Redireccionando para Cierre. ***`;
-                    displayMessage(statusText, 'status-success');
-                } else {
-                     statusText += ` *** ADVERTENCIA DE RIESGO: Se lograron ${successCount}/6 ejecuciones. Revise el LOG del Puente PY y configure las claves en .env. ***`;
-                     displayMessage(statusText, 'status-error');
-                }
+                // --- 3. REDIRECCIÓN INELUDIBLE ---
+                // Damos un breve momento para que el usuario lea el éxito y las notificaciones se inicien.
+                setTimeout(() => {
+                    window.location.href = checkoutUrl; // LA EJECUCIÓN ES AQUÍ
+                }, 700); 
+
+            } catch (error) {
+                // --- MANEJO DE FRICCIÓN FALLIDA ---
+                const finalMsg = `FALLO CRÍTICO EN MONETIZACIÓN: ${error.message}`;
+                displayMessage(finalMsg, 'status-error');
                 
-                cryptoAddressInput.disabled = true;
+                cryptoAddressInput.disabled = false;
                 activateButton.disabled = false;
-                activateButton.textContent = 'VENTA CAPTURADA - PROCEDER A LA ENTREGA';
-                
-                // Redirigir al cliente a la página de éxito configurada
-                window.location.href = URL_CHECKOUT_FINAL;
-            }, 1500);
+                activateButton.textContent = 'ERROR EN PAGO - REINTENTAR BLINDAJE';
+                console.error("Fallo Fatal en Stripe Checkout:", error);
+
+                // Como FALLÓ el pago, redirigimos al fallback para no perder el lead completamente.
+                setTimeout(() => {
+                    window.location.href = URL_CHECKOUT_FALLBACK;
+                }, 1500); 
+            }
         };
 
 
-        // ⏳ NODO ALTO DE URGENCIA FANTASMA
+        // ⏳ NODO ALTO DE URGENCIA FANTASMA (Mantenido)
         window.iniciar_contador_ame = () => {
             const fecha_cierre = new Date(CIERRE_OFERTA_AME).getTime();
             const contador_dom = document.getElementById("contador-ame");
@@ -322,6 +328,7 @@
     </script>
 </body>
 </html>
+
 
 
 
